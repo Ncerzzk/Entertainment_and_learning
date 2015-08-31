@@ -9,122 +9,13 @@ import pymysql
 import tornado.ioloop
 import tornado.web
 
-class Safe(object):
-    @staticmethod
-    def clear(string):
-        """
-        prevent from sql attack
-        """
-        r='select|insert|update|delete|drop|into'
-        pattern=re.compile(r)
-        try:
-            string=string.decode('utf-8')
-        except:
-            pass
-        result=re.sub(pattern,'',string)
-        return result
-
-    @staticmethod
-    def md5(string):
-        m=hashlib.md5()
-        m.update(string.encode())
-        return m.hexdigest()
-
-    @staticmethod
-    def get_time():
-        return int(time.time())
-
-    @staticmethod
-    def get_session(salt):
-        t=str(Safe.get_time())
-        string=t+str(salt)
-        return Safe.md5(string)
-    
-    @staticmethod
-    def get_deadline(days=30):
-        t=Safe.get_time()
-        t+=24*60*60*days
-        return t
-
-class DB(object):
-    def __init__(self,host,user,password,db,charset='utf8'):
-        self.conn=pymysql.connect(host=host,user=user,passwd=password,db=db,charset=charset)
-        self.cur=self.conn.cursor()
-
-    def insert(self,table,dic):
-        """
-         dic is a dictionary like:
-         {
-         'username':hello,
-         'password':1234567
-         }
-        """
-        key=''
-        value=''
-        for i in dic:
-            key+=i+','
-            value+='\''+Safe.clear(str(dic[i]))+'\''+','
-        key=key[:-1:]
-        value=value[:-1:]
-        sql='insert into %s(%s) values(%s);' %(table,key,value)
-        stats=self.cur.execute(sql)
-        self.conn.commit()
-        if stats==0:
-            print("error,happened when insert into table.")
-            return 1
-
-    @staticmethod
-    def deal_condition(condition):
-        result=''
-        for i in condition:
-            result+=i+'=\''+Safe.clear(str(condition[i]))+'\' and '
-        return result[:-4:]
-
-    def del_one(self,table,condition):
-        """
-        condition is a dict like {'uid':1}
-        """
-        sql='delete from %s where ' % table
-        condition=DB.deal_condition(condition)
-        sql+=condition+';'
-        stats=self.cur.execute(sql)
-        self.conn.commit()
-        if stats==0:
-            print("error,happened when del_one")
-            return 1
-      
-    
-    def update(self,table,value,condition):
-        condition=DB.deal_condition(condition)
-        value=DB.deal_condition(value)
-        value=value.replace('and',',')
-        sql='update %s set %s where %s;' % (table,value,condition)
-        stats=self.cur.execute(sql)
-        self.conn.commit()
-        if stats==0:
-            print("error,happened when update")
-            return 1
-    def select(self,table,condition):
-        """
-        found,return the list;
-        else,return 1;
-        """
-        condition=DB.deal_condition(condition)
-        sql='select * from %s where %s;' % (table,condition)
-        stats=self.cur.execute(sql)
-        if stats==0:
-            print("error,nothing found,happened when select")
-            return 1
-        else:
-            return list(self.cur)
-
-    def __del__(self):
-        self.cur.close()
-        self.conn.close()
+from db import *
+from safe import *
+from setting import *
 
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self):
-        self.db=DB('localhost','root','6789mm','learning')
+        self.db=DB(DBHOST,DBUSER,DBPWD,DBNAME)
 
 
     def return_json(self,obj):
@@ -137,10 +28,11 @@ class BaseHandler(tornado.web.RequestHandler):
         username=self.get_cookie('username')
         if uid==None:
             return None
-        result=self.db.select('session',{'uid':uid,'session':session})[0]
+        result=self.db.select('session',{'uid':uid,'session':session},'deadline')[0]
+        deadline=int(result['deadline'])
         if result!=1:
             now_time=Safe.get_time()
-            if int(now_time)>int(result[3]):
+            if int(now_time)>deadline:
                 """
                 out time
                 """
@@ -155,14 +47,14 @@ class LoginHandler(BaseHandler):
         mail=self.get_argument('mail')
         password=self.get_argument('pwd')
         password=Safe.md5(password)
-        result = self.db.select('user',{'mail':mail,'password':password})[0]
-        username=result[1]
-        uid=result[0]
+        result = self.db.select('user',{'mail':mail,'password':password},'name,id')[0]
+        username=result['name']
+        uid=result['id']
         if result!=1:
             """
             login success,check session;
             """
-            sessionresult=self.db.select('session',{'uid':uid})
+            sessionresult=self.db.select('session',{'uid':uid},'session,deadline')
             now_time=Safe.get_time()
             if sessionresult==1:
                 "never logined before"
@@ -170,8 +62,8 @@ class LoginHandler(BaseHandler):
                 session=Safe.get_session(mail)
                 self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
             else:    
-                deadline=sessionresult[0][3]
-                session=sessionresult[0][2]
+                deadline=sessionresult[0]['deadline']
+                session=sessionresult[0]['session']
                 if int(now_time)>int(deadline):
                     session=Safe.get_session(mail)
                     new_deadline=Safe.get_deadline()
@@ -184,6 +76,7 @@ class LoginHandler(BaseHandler):
             username=username or 'null'
             self.set_cookie('username',username)
             self.set_cookie('session',session)
+            self.return_json({'result':200,'uid':uid,'session':session})
             print("login success and set cookie yet")
 
 
@@ -191,7 +84,6 @@ class LogoutHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
         uid=self.get_cookie('uid')
-        pid=self.get_argument('pid')
         if self.db.del_one('session',{'uid':uid})!=1:
             self.return_json({'result':200})
             print("logout success")
@@ -214,14 +106,13 @@ class RegHandler(BaseHandler):
         """
         rember to clear evil code in mail and password.
         """
-        if self.db.select('user',{'mail':mail})!=1:
+        if self.db.select('user',{'mail':mail},'id')!=1:
             # existed user
             self.return_json({'result':100001,'explain':'the user has signed.'})
             print('user has signed.')
-            return 1
+            return None
         if self.db.insert('user',{'mail':mail,'password':password})!=1:
-            result=self.db.select('user',{'mail':mail})[0]
-            uid=result[0]
+            uid=self.db.get_id()
             session=Safe.get_session(mail)
             deadline=Safe.get_deadline()
             self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
@@ -262,9 +153,11 @@ class AddTaskHandler(BaseHandler):
             'time_limit':time_limit
         }
         if self.db.insert('task',dic)!=1:
+            id=self.db.get_id()
             print('add_task success')
             result = {
-                'result':200
+                'result':200,
+                'taskid':id
             }
             self.return_json(result)
         else:
@@ -310,8 +203,10 @@ class DelTaskHandler(BaseHandler):
         result=self.db.del_one('task',{'uid':uid,'tid':tid})
         if result==1:
             self.return_json({'result':100003,'explain':'task not found'})
+            print("error,deltask")
             return None
         else:
+            print("deltask success")
             self.return_json({'result':200})
         
 
@@ -322,15 +217,16 @@ class CompeleteTaskHandler(BaseHandler):
     def post(self):
         uid=self.get_cookie('uid')
         tid=self.get_argument('tid')
-        result=self.db.select('task',{'tid':tid})
+        result=self.db.select('task',{'tid':tid},'score,time_remain')
         if result==1:
             self.return_json({'result':100003,'explain':'task not found'})
             return 1
-        if result[0][8]!=0:
-            time=int(result[0][8])
-            score=int(result[0][3])
-            userinfo=self.db.select('user',{'id':uid})
-            todayscore=int(userinfo[0][6])+score
+        if result[0]['time_remain']!=0:
+            time=int(result[0]['time_remain'])
+            score=int(result[0]['score'])
+            userinfo=self.db.select('user',{'id':uid},'today_score')
+            #################################################
+            todayscore=int(userinfo[0]['today_score'])+score
             try:
                 self.db.update('user',{'today_score':todayscore},{'id':uid}) 
                 self.db.update('task',{'time_remain':time-1},{'tid':tid})
@@ -359,8 +255,9 @@ class AddProjectHandler(BaseHandler):
         }
 
         if self.db.insert('project',dic)!=1:
+            pid=self.db.get_id()
             print("add project success")
-            self.return_json({'result':200})
+            self.return_json({'result':200,'pid':pid})
         else:
             self.return_json({'result':100006,'explain':'addproject error'})
             print("error,happened when add project")
