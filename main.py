@@ -12,318 +12,18 @@ import tornado.web
 from db import *
 from safe import *
 from setting import *
-
-class BaseHandler(tornado.web.RequestHandler):
-    def initialize(self):
-        self.db=DB(DBHOST,DBUSER,DBPWD,DBNAME)
-
-
-    def return_json(self,obj):
-        self.set_header('Content-type','application/json')
-        self.write(json.dumps(obj))
-
-    def get_current_user(self):
-        uid=self.get_cookie('uid')
-        session=self.get_cookie('session')
-        username=self.get_cookie('username')
-        if uid==None:
-            return None
-        result=self.db.select('session',{'uid':uid,'session':session},'deadline')[0]
-        deadline=int(result['deadline'])
-        if result!=1:
-            now_time=Safe.get_time()
-            if int(now_time)>deadline:
-                """
-                out time
-                """
-                return None
-            else:
-                return username
-        else:
-            return None
-
-class LoginHandler(BaseHandler):
-    def post(self):
-        mail=self.get_argument('mail')
-        password=self.get_argument('pwd')
-        password=Safe.md5(password)
-        result = self.db.select('user',{'mail':mail,'password':password},'name,id')[0]
-        username=result['name']
-        uid=result['id']
-        if result!=1:
-            """
-            login success,check session;
-            """
-            sessionresult=self.db.select('session',{'uid':uid},'session,deadline')
-            now_time=Safe.get_time()
-            if sessionresult==1:
-                "never logined before"
-                deadline=Safe.get_deadline()
-                session=Safe.get_session(mail)
-                self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
-            else:    
-                deadline=sessionresult[0]['deadline']
-                session=sessionresult[0]['session']
-                if int(now_time)>int(deadline):
-                    session=Safe.get_session(mail)
-                    new_deadline=Safe.get_deadline()
-                    """
-                    update the session
-                    """
-                    self.db.update('session',{'session':session,'uid':uid,'deadline':new_deadline},{'uid'})
-
-            self.set_cookie('uid',str(uid))
-            username=username or 'null'
-            self.set_cookie('username',username)
-            self.set_cookie('session',session)
-            self.return_json({'result':200,'uid':uid,'session':session})
-            print("login success and set cookie yet")
-
-
-class LogoutHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        if self.db.del_one('session',{'uid':uid})!=1:
-            self.return_json({'result':200})
-            print("logout success")
-        else:
-            print("error,when logout")
-
-        self.clear_all_cookies()
-
-
+from base import *
+from user import *
+from task import *
+from project import *
             
 class TestHandler(BaseHandler):
     def post(self):
         self.db.del_one('task',{'uid':1})
                 
-class RegHandler(BaseHandler):
-    def post(self):
-        mail=self.get_argument('mail')
-        password=self.get_argument('pwd')
-        password=Safe.md5(password)
-        """
-        rember to clear evil code in mail and password.
-        """
-        if self.db.select('user',{'mail':mail},'id')!=1:
-            # existed user
-            self.return_json({'result':100001,'explain':'the user has signed.'})
-            print('user has signed.')
-            return None
-        if self.db.insert('user',{'mail':mail,'password':password})!=1:
-            uid=self.db.get_id()
-            session=Safe.get_session(mail)
-            deadline=Safe.get_deadline()
-            self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
-            self.return_json({'result':200,'uid':uid,'session':session})
-
-
-            self.set_cookie('uid',str(uid))
-            self.set_cookie('session',session)
-            print('reg success')
-            """
-            reg success,return session.
-            return json.
-            """
-        else:
-            print("error,when regging")
-        
-        
-class AddTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        library=self.get_argument('library')
-        task_name=self.get_argument('taskname')
-        task_info=self.get_argument('taskinfo')
-        score=self.get_argument('score')
-        try:
-            time_limit=self.get_argument('limit')
-        except:
-            time_limit=-1
-        pid=self.get_argument('pid')
-        dic={
-            'uid':uid,
-            'pid':pid,
-            'task_name':task_name,
-            'task_info':task_info,
-            'score':score,
-            'library':library,
-            'time_limit':time_limit
-        }
-        if self.db.insert('task',dic)!=1:
-            id=self.db.get_id()
-            print('add_task success')
-            result = {
-                'result':200,
-                'taskid':id
-            }
-            self.return_json(result)
-        else:
-            print('error,happened when add_task')
-            return None
-
-class UpdateTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        tid=self.get_argument('tid')
-        library=self.get_argument('library')
-        task_name=self.get_argument('taskname')
-        task_info=self.get_argument('taskinfo')
-        score=self.get_argument('score')
-        try:
-            time_limit=self.get_argument('limit')
-        except:
-            time_limit=-1
-        pid=self.get_argument('pid')
-        dic={
-            'uid':uid,
-            'pid':pid,
-            'task_name':task_name,
-            'task_info':task_info,
-            'score':score,
-            'library':library,
-            'time_limit':time_limit
-        } 
-        if self.db.update('task',dic,{'tid':tid})!=1:
-            print("update_task success")
-            self.return_json({'result':200})
-        else:
-            print("error,happened when update_task")
-            return None
-
-
-class DelTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        tid=self.get_argument('tid')
-        result=self.db.del_one('task',{'uid':uid,'tid':tid})
-        if result==1:
-            self.return_json({'result':100003,'explain':'task not found'})
-            print("error,deltask")
-            return None
-        else:
-            print("deltask success")
-            self.return_json({'result':200})
         
 
 
-
-class CompeleteTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        tid=self.get_argument('tid')
-        result=self.db.select('task',{'tid':tid},'score,time_remain')
-        if result==1:
-            self.return_json({'result':100003,'explain':'task not found'})
-            return 1
-        if result[0]['time_remain']!=0:
-            time=int(result[0]['time_remain'])
-            score=int(result[0]['score'])
-            userinfo=self.db.select('user',{'id':uid},'today_score')
-            #################################################
-            todayscore=int(userinfo[0]['today_score'])+score
-            try:
-                self.db.update('user',{'today_score':todayscore},{'id':uid}) 
-                self.db.update('task',{'time_remain':time-1},{'tid':tid})
-            except:
-                return None
-            print("compeletetask sucess")
-            self.return_json({'result':200})
-        else:
-            print("error,happened when compeletetask")
-            self.return_json({'result':100002,'explain':'time_remain is 0'})
-            return None
-
-
-class AddProjectHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        name=self.get_argument('projectname')
-        info=self.get_argument('info')
-        owner_id=self.get_cookie('uid')
-        owner_name=self.get_cookie('username')
-        dic={
-            'name':name,
-            'info':info,
-            'owner_id':owner_id,
-            'owner_name':owner_name
-        }
-
-        if self.db.insert('project',dic)!=1:
-            pid=self.db.get_id()
-            print("add project success")
-            self.return_json({'result':200,'pid':pid})
-        else:
-            self.return_json({'result':100006,'explain':'addproject error'})
-            print("error,happened when add project")
-            return None
-        
-class UpdateProjectHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        pid=self.get_argument('pid')
-        name=self.get_argument('projectname')
-        info=self.get_argument('info')
-        owner_name=self.get_cookie('username')
-        dic={
-            'name':name,
-            'info':info,
-            'owner_name':owner_name
-        }
-        if self.db.update('project',dic,{'pid':pid,'owner_id':uid})!=1:
-            self.return_json({'result':200})
-            print("update project success")
-        else:
-            self.return_json({'result':100004,'explain':'update_project error'})
-            return None
-
-class DelProjectHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        pid=self.get_argument('pid')
-        if self.db.del_one('project',{'owner_id':uid,'pid':pid})!=1:
-            self.return_json({'result':200})
-            print('del_project success')
-        else:
-            self.return_json({'result':100005,'explain':'del_project error'})
-            print('error,del_project')
-            return None
-
-      
-
-class ShareProjectHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        pid=self.get_argument('pid')
-        if self.db.update('project',{'share':1},{'owner_id':uid,'pid':pid})!=1:
-            self.return_json({'result':200})
-            print("share project success")
-        else:
-            self.return_json({'result':100005,'explain':'share error'})
-            print("share error")
-            return None
-
-
-class UnShareProjectHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        pid=self.get_argument('pid')
-        if self.db.update('project',{'share':0},{'owner_id':uid,'pid':pid})!=1:
-            self.return_json({'result':200})
-            print("unshare project success")
-        else:
-            self.return_json({'result':100005,'explain':'unshare error'})
-            print("share error")
-            return None
 
 class UserInfoHandler(BaseHandler):
     def post(self):
@@ -341,18 +41,22 @@ print(a.select('user',{'id':5}))
 
 application = tornado.web.Application([
         (r"/test",TestHandler),
-        (r"/reg", RegHandler),
-        (r"/login",LoginHandler),
-        (r"/logout",LogoutHandler),
-        (r"/addtask",AddTaskHandler),
-        (r"/updatetask",UpdateTaskHandler),
-        (r"/deltask",DelTaskHandler),
-        (r"/compeletetask",CompeleteTaskHandler),
-        (r"/addproject",AddProjectHandler),
-        (r"/delproject",DelProjectHandler),
-        (r"/updateproject",UpdateProjectHandler),
-        (r"/shareproject",ShareProjectHandler),
-        (r"/unshareproject",UnShareProjectHandler)
+        (r"/user/reg", RegHandler),
+        (r"/user/login",LoginHandler),
+        (r"/user/get",GetUserInfo),
+        (r"/user/logout",LogoutHandler),
+        (r"/task/add",AddTaskHandler),
+        (r"/task/update",UpdateTaskHandler),
+        (r"/task/del",DelTaskHandler),
+        (r"/task/get",GetTaskInfo),
+        (r"/task/compelete",CompeleteTaskHandler),
+        (r"/project/add",AddProjectHandler),
+        (r"/project/del",DelProjectHandler),
+        (r"/project/update",UpdateProjectHandler),
+        (r"/project/share",ShareProjectHandler),
+        (r"/project/unshare",UnShareProjectHandler),
+        (r"/project/change",ChangeProjectShareStats),
+        (r"/project/get",GetProjectInfo)
 
 ])
 
