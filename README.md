@@ -4,41 +4,45 @@ idea come from http://www.zhihu.com/question/33453309#answer-19211320
 
 going on....
 
-
-/reg /login
+API
+/user/reg /user/login
 (mail,password)其中密码以明文发送
 
-/logout
+/user/logout
 (无参数)
 
-/addtask
+/task/add
 (library,taskname,taskinfo,score,[limit])
 其中limit为可选,不填则为-1(即不限次数)
 
-/updatetask
+/task/update
 (library,taskname,taskinfo,score,[limit])
 其中limit为可选,不填则为-1(即不限次数)
 
-/deltask
+/task/del
 (tid)
 
-/compeletetask
+/task/compelete
 (tid)
 
-/addproject
+/project/add
 (projectname,info)
 
-/updateproject
+/project/update
 (pid,projectname,info)
 
-/delproject
+/project/del
 (pid)
 注意:只能删除当前登陆账号所拥有的project,否则返回错误
 
-/shareproject
+/project/share
 (pid)
 注意:只能分享当前登陆账号所拥有的project,否则返回错误
 
-/unshareproject
+/project/unshare
+(pid)
+注意:只能分享当前登陆账号所拥有的project,否则返回错误
+
+/project/change(建议用这个代替share和unshare)
 (pid)
 注意:只能分享当前登陆账号所拥有的project,否则返回错误
