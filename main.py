@@ -22,7 +22,9 @@ class TestHandler(BaseHandler):
         self.db.del_one('task',{'uid':1})
                 
         
-
+class GetHTMLHandler(BaseHandler):
+    def get(self):
+        self.return_html('reg.html')
  
 class UserInfoHandler(BaseHandler):
     def post(self):
@@ -55,7 +57,8 @@ application = tornado.web.Application([
         (r"/project/share",ShareProjectHandler),
         (r"/project/unshare",UnShareProjectHandler),
         (r"/project/change",ChangeProjectShareStats),
-        (r"/project/get",GetProjectInfo)
+        (r"/project/get",GetProjectInfo),
+        (r"/reg.html",GetHTMLHandler)
 
 ])
 
