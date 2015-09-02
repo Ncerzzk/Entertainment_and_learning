@@ -14,6 +14,18 @@ class BaseHandler(tornado.web.RequestHandler):
     def return_json(self,obj):
         self.set_header('Content-type','application/json')
         self.write(json.dumps(obj))
+    
+    def return_html(self,fs,isfile=True):
+        if isfile==True:
+            f=open(fs)
+            string=f.read()
+            f.close()
+        else:
+            string=fs
+        self.set_header('Content-type','text/html')
+        self.write(string)
+            
+
 
     def get_current_user(self):
         uid=self.get_cookie('uid')
