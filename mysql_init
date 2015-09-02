@@ -22,5 +22,6 @@ name char(255) null,
 info text null,
 clear_time int not null default 6,
 today_score int not null default 0,
-score int not null default 0);
+score int not null default 0,
+nowpid int null);
 

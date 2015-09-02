@@ -8,6 +8,7 @@ class AddTaskHandler(BaseHandler):
     def post(self):
         uid=self.get_cookie('uid')
         library=self.get_argument('library')
+        
         task_name=self.get_argument('taskname')
         task_info=self.get_argument('taskinfo')
         score=self.get_argument('score')
@@ -107,3 +108,32 @@ class GetTaskInfo(BaseHandler):
     def post(self):
         tid=self.get_argument('tid')
         self.get_info('task',tid)
+
+class GetAllLibraryOfOneUser(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        uid=self.get_cookie('uid')
+        result=self.db.select('task',{'uid':uid},'library')
+        if result!=1:
+            self.return_json({'result':200,'library':result})
+            print('return library success')
+        else:
+            self.return_json({'result':100010,'explain':'no library'})
+            print('no library found')
+            return None
+
+class GetNowTask(BaseHandler):
+    @tornado.web.authenticated
+    def get(self):
+        uid=self.get_cookie('uid')
+        nowpid=self.db.select('userinfo',{'uid':uid},'nowpid')[0]['nowpid']
+        print(nowpid)
+        result=self.db.select('task',{'uid':uid,'pid':nowpid})
+        if result!=1:
+            self.return_json({'result':200,'task':result})
+            print('get now task success')
+        else:
+            self.return_json({'result':100012,'explain':'no this user or this project'})
+            print('error when get now task')
+            return None
+

@@ -43,7 +43,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 """
                 return None
             else:
-                return username
+                return uid
         else:
             return None
 

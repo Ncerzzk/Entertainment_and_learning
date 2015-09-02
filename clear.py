@@ -22,8 +22,9 @@ result=db.select('userinfo',{'clear_time':now_time},'uid,today_score,score')
 if result!=1:
     for i in result:
         uid=i['uid']
+        nowpid=i['nowpid']
         today_score=int(i['today_score'])
-        sum_score=int(db.sum('task','score',{'uid':uid})) #task socre_sum
+        sum_score=int(db.sum('task','score',{'uid':uid,'pid':nowpid})) #task socre_sum
         score=int(i['score']) #user all score
         k=(today_score-sum_score)/abs(sum_score)
         k+=1

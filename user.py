@@ -6,7 +6,7 @@ from safe import *
 class LoginHandler(BaseHandler):
     def post(self):
         mail=self.get_argument('mail')
-        password=self.get_argument('pwd')
+        password=self.get_argument('password')
         password=Safe.md5(password)
         result = self.db.select('user',{'mail':mail,'password':password},'name,uid')[0]
         username=result['name']
@@ -58,6 +58,10 @@ class RegHandler(BaseHandler):
         mail=self.get_argument('mail')
         password=self.get_argument('password')
         password=Safe.md5(password)
+        try:
+            username=self.get_argument('username')
+        except:
+            username='null'
         """
         rember to clear evil code in mail and password.
         """
@@ -73,8 +77,7 @@ class RegHandler(BaseHandler):
             deadline=Safe.get_deadline()
             self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
             self.return_json({'result':200,'uid':uid,'session':session})
-
-
+            self.set_cookie('username',username)
             self.set_cookie('uid',str(uid))
             self.set_cookie('session',session)
             print('reg success')

@@ -68,6 +68,19 @@ class ShareProjectHandler(BaseHandler):
             print("share error")
             return None
 
+class SetNowPidHandler(BaseHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        pid=self.get_argument('pid')
+        if self.db.update('userinfo',{'nowpid':pid},{'uid':uid})!=1:
+            self.return_json({'result':200})
+            print('set nowpid success')
+        else:
+            self.return_json({'result':100011,'explain':'no this user'})
+            print('fail to set nowpid')
+            return None
+
 
 class UnShareProjectHandler(BaseHandler):
     @tornado.web.authenticated
