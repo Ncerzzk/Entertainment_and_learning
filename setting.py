@@ -5,7 +5,7 @@
 
 DBHOST='localhost'
 DBUSER='root'
-DBPWD='6789mm'
+DBPWD=''
 DBNAME='learning'
 
 TIMEADD=0
