@@ -42,3 +42,4 @@ class Safe(object):
         t=Safe.get_time()
         t+=24*60*60*days
         return t
+

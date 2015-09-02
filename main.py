@@ -23,8 +23,7 @@ class TestHandler(BaseHandler):
                 
         
 
-
-
+ 
 class UserInfoHandler(BaseHandler):
     def post(self):
         pass

@@ -56,7 +56,7 @@ class LogoutHandler(BaseHandler):
 class RegHandler(BaseHandler):
     def post(self):
         mail=self.get_argument('mail')
-        password=self.get_argument('pwd')
+        password=self.get_argument('password')
         password=Safe.md5(password)
         """
         rember to clear evil code in mail and password.

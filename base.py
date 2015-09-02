@@ -69,3 +69,4 @@ class BaseHandler(tornado.web.RequestHandler):
             self.return_json({'result':100009,'explain':'get %s info error'% table})
             return None
 
+

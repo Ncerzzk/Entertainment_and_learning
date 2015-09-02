@@ -107,3 +107,4 @@ class GetProjectInfo(BaseHandler):
     def post(self):
         pid=self.get_argument('pid')
         self.get_info('project',pid) 
+
