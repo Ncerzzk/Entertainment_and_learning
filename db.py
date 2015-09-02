@@ -2,6 +2,7 @@
 # coding=utf-8
 import pymysql
 import pymysql.cursors
+import pymysql.err
 from safe import *
 
 class DB(object):
@@ -38,6 +39,11 @@ class DB(object):
             result+=i+'=\''+Safe.clear(str(condition[i]))+'\' and '
         return result[:-4:]
 
+    def excute(self,sql):
+        self.cur.execute(sql)
+        self.conn.commit()
+        return self.cur.fetchall()
+
     def del_one(self,table,condition):
         """
         condition is a dict like {'uid':1}
@@ -57,11 +63,13 @@ class DB(object):
         value=DB.deal_condition(value)
         value=value.replace('and',',')
         sql='update %s set %s where %s;' % (table,value,condition)
+        print(sql)
         stats=self.cur.execute(sql)
         self.conn.commit()
         if stats==0:
             print("error,happened when update")
             return 1
+
     def select(self,table,condition,need='all'):
         """
         found,return the list;
@@ -78,6 +86,21 @@ class DB(object):
             return 1
         else:
             return self.cur.fetchall()
+
+    def sum(self,table,expression,condition):
+        """
+        expression="score+pid"
+        """
+        condition=DB.deal_condition(condition)
+        sql='select sum(%s) from %s where %s;' % (expression,table,condition)
+        stats=self.cur.execute(sql)
+        if stats!=1:
+            print("error,when sum")
+            return 1
+        else:
+            result=self.cur.fetchone()
+            result=result['sum(%s)'% expression]
+            return result
 
     def get_id(self):
         sql='select last_insert_id();'
