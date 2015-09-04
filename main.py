@@ -51,7 +51,7 @@ application = tornado.web.Application([
         (r"/task/del",DelTaskHandler),
         (r"/task/get",GetTaskInfo),
         (r"/task/compelete",CompeleteTaskHandler),
-        (r"/task/getlibrary",GetAllLibraryOfOneUser),
+        (r"/task/getlibrary",GetLibraryHandler),
         (r"/task/getnowtask",GetNowTask),
         (r"/project/add",AddProjectHandler),
         (r"/project/setnowpid",SetNowPidHandler),

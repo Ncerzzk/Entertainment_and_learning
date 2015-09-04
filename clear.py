@@ -18,8 +18,9 @@ def abs(t):
 db=DB(DBHOST,DBUSER,DBPWD,DBNAME)
 now_time=get_hour()
 now_time=6
-result=db.select('userinfo',{'clear_time':now_time},'uid,today_score,score')
+result=db.select('userinfo',{'clear_time':now_time},'uid,today_score,score,nowpid')
 if result!=1:
+    print(result)
     for i in result:
         uid=i['uid']
         nowpid=i['nowpid']

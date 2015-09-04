@@ -3,90 +3,45 @@
 from base import *
 from safe import *
 
-class AddTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        library=self.get_argument('library')
-        
-        task_name=self.get_argument('taskname')
-        task_info=self.get_argument('taskinfo')
-        score=self.get_argument('score')
-        try:
-            time_limit=self.get_argument('limit')
-        except:
-            time_limit=-1
-        pid=self.get_argument('pid')
-        dic={
-            'uid':uid,
-            'pid':pid,
-            'task_name':task_name,
-            'task_info':task_info,
-            'score':score,
-            'library':library,
-            'time_limit':time_limit
-        }
-        if self.db.insert('task',dic)!=1:
+class TaskHandler(BaseHandler):
+    def add_task(self,uid,pid,task_name,task_info,score,library,time_limit):
+        """
+        arguments:
+        uid,pid,task_name,task_info,score,library,time_limit
+        """
+        if self.add_one('task',
+                           uid=uid,
+                           pid=pid,
+                           task_name=task_name,
+                           task_info=task_info,
+                           score=score,
+                           library=library,
+                           time_limit=time_limit
+                          )!=1:
             id=self.db.get_id()
-            print('add_task success')
-            result = {
-                'result':200,
-                'taskid':id
-            }
-            self.return_json(result)
+            return id
         else:
-            print('error,happened when add_task')
             return None
-
-class UpdateTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        tid=self.get_argument('tid')
-        library=self.get_argument('library')
-        task_name=self.get_argument('taskname')
-        task_info=self.get_argument('taskinfo')
-        score=self.get_argument('score')
-        try:
-            time_limit=self.get_argument('limit')
-        except:
-            time_limit=-1
-        pid=self.get_argument('pid')
-        dic={
-            'uid':uid,
-            'pid':pid,
-            'task_name':task_name,
-            'task_info':task_info,
-            'score':score,
-            'library':library,
-            'time_limit':time_limit
-        } 
-        if self.db.update('task',dic,{'tid':tid})!=1:
-            print("update_task success")
-            self.return_json({'result':200})
+    
+    def update_task(self,uid,pid,task_name,task_info,score,library,time_limit,conditon):
+        if self.update_one(table='task',
+                           conditon=conditon,
+                            uid=uid,
+                            pid=pid,
+                            task_name=task_name,
+                            task_info=task_info,
+                            score=score,
+                            library=library,
+                            time_limit=time_limit)==1: 
+            return None
         else:
-            print("error,happened when update_task")
-            return None
-
-
-class DelTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        tid=self.get_argument('tid')
-        self.del_something('task',tid,uid)
-
-
-
-class CompeleteTaskHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
-        tid=self.get_argument('tid')
+            return 'success'
+           
+    def compelete_task(self,uid,tid):
         result=self.db.select('task',{'tid':tid},'score,time_remain')
         if result==1:
             self.return_json({'result':100003,'explain':'task not found'})
-            return 1
+            return None
         if result[0]['time_remain']!=0:
             time=int(result[0]['time_remain'])
             score=int(result[0]['score'])
@@ -95,45 +50,115 @@ class CompeleteTaskHandler(BaseHandler):
             try:
                 self.db.update('userinfo',{'today_score':todayscore},{'uid':uid}) 
                 self.db.update('task',{'time_remain':time-1},{'tid':tid})
+                return 'success'
             except:
                 return None
-            print("compeletetask sucess")
-            self.return_json({'result':200})
         else:
-            print("error,happened when compeletetask")
-            self.return_json({'result':100002,'explain':'time_remain is 0'})
             return None
 
-class GetTaskInfo(BaseHandler):
+    def get_nowtask(self,uid):
+        nowpid=self.db.select('userinfo',{'uid':uid},'nowpid')[0]['nowpid']
+        result=self.db.select('task',{'uid':uid,'pid':nowpid})
+        if result!=1:
+            return result
+        else:
+            return None
+
+
+    def get_library(self,uid):
+        result=self.db.select('task',{'uid':uid},'library')
+
+        if result!=1:
+            library=[]
+            for i in result:
+                if i['library'] not in library:
+                    library.append(i['library'])
+            return library
+        else:
+            return None
+
+
+
+class AddTaskHandler(TaskHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        library=self.get_argument('library')        
+        task_name=self.get_argument('taskname')
+        task_info=self.get_argument('taskinfo')
+        score=self.get_argument('score')
+        try:
+            time_limit=self.get_argument('limit')
+        except:
+            time_limit=-1
+        pid=self.get_argument('pid')
+        id=self.add_task(uid=uid,library=library,task_name=task_name,task_info=task_info,score=score,time_limit=time_limit,pid=pid)
+        if id!=None:
+            self.return_json({'result':200,'tid':id})
+        else:
+            self.return_json({'result':100013,'explain':'addtask error'})
+
+
+
+class UpdateTaskHandler(TaskHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        tid=self.get_argument('tid')
+        library=self.get_argument('library')
+        task_name=self.get_argument('taskname')
+        task_info=self.get_argument('taskinfo')
+        score=self.get_argument('score')
+        try:
+            time_limit=self.get_argument('limit')
+        except:
+            time_limit=-1
+        pid=self.get_argument('pid')
+        condition={'tid':tid}
+        if self.update_task(uid=uid,pid=pid,library=library,task_name=task_name,task_info=task_info,score=score,time_limit=time_limit,conditon=condition)!=None:
+            self.return_json({'result':200,'tid':tid})
+        else:
+            self.return_json({'result':100014,'explain':'update error'})
+
+
+class DelTaskHandler(TaskHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        tid=self.get_argument('tid')
+        self.del_something('task',tid,uid)
+
+class CompeleteTaskHandler(TaskHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        tid=self.get_argument('tid')
+        if self.compelete_task(uid,tid)!=None:
+            self.return_json({'result':200,'tid':tid})
+        else:
+            self.return_json({'result':100002,'explain':'compeletetask error'})
+
+class GetTaskInfo(TaskHandler):
     def post(self):
         tid=self.get_argument('tid')
         self.get_info('task',tid)
 
-class GetAllLibraryOfOneUser(BaseHandler):
+class GetLibraryHandler(TaskHandler):
     @tornado.web.authenticated
     def get(self):
         uid=self.get_cookie('uid')
-        result=self.db.select('task',{'uid':uid},'library')
-        if result!=1:
+        result=self.get_library(uid)
+        if result!=None:
             self.return_json({'result':200,'library':result})
-            print('return library success')
         else:
             self.return_json({'result':100010,'explain':'no library'})
-            print('no library found')
-            return None
-
-class GetNowTask(BaseHandler):
+        
+class GetNowTask(TaskHandler):
     @tornado.web.authenticated
     def get(self):
         uid=self.get_cookie('uid')
-        nowpid=self.db.select('userinfo',{'uid':uid},'nowpid')[0]['nowpid']
-        print(nowpid)
-        result=self.db.select('task',{'uid':uid,'pid':nowpid})
-        if result!=1:
+        result=self.get_nowtask(uid)
+        if result!=None:
             self.return_json({'result':200,'task':result})
-            print('get now task success')
         else:
             self.return_json({'result':100012,'explain':'no this user or this project'})
-            print('error when get now task')
-            return None
-

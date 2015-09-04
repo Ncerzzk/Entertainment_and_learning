@@ -3,10 +3,8 @@
 from base import *
 from safe import *
 
-class LoginHandler(BaseHandler):
-    def post(self):
-        mail=self.get_argument('mail')
-        password=self.get_argument('password')
+class UserHandler(BaseHandler):
+    def login(self,mail,password):
         password=Safe.md5(password)
         result = self.db.select('user',{'mail':mail,'password':password},'name,uid')[0]
         username=result['name']
@@ -40,11 +38,7 @@ class LoginHandler(BaseHandler):
             self.return_json({'result':200,'uid':uid,'session':session})
             print("login success and set cookie yet")
 
-
-class LogoutHandler(BaseHandler):
-    @tornado.web.authenticated
-    def post(self):
-        uid=self.get_cookie('uid')
+    def logout(self,uid):
         if self.db.del_one('session',{'uid':uid})!=1:
             self.return_json({'result':200})
             print("logout success")
@@ -53,10 +47,7 @@ class LogoutHandler(BaseHandler):
 
         self.clear_all_cookies()
 
-class RegHandler(BaseHandler):
-    def post(self):
-        mail=self.get_argument('mail')
-        password=self.get_argument('password')
+    def reg(self,mail,password):
         password=Safe.md5(password)
         try:
             username=self.get_argument('username')
@@ -88,7 +79,28 @@ class RegHandler(BaseHandler):
         else:
             print("error,when regging")
         
-class GetUserInfo(BaseHandler):
+
+class LoginHandler(UserHandler):
+    def post(self):
+        mail=self.get_argument('mail')
+        password=self.get_argument('password')
+        self.login(mail,password)
+
+        
+
+class LogoutHandler(UserHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        self.logout(uid)
+        
+class RegHandler(UserHandler):
+    def post(self):
+        mail=self.get_argument('mail')
+        password=self.get_argument('password')
+        self.reg(mail,password)
+
+class GetUserInfo(UserHandler):
     def post(self):
         uid=self.get_argument('uid')
         self.get_info('userinfo',uid)

@@ -6,6 +6,10 @@ import pymysql.err
 from safe import *
 
 class DB(object):
+    """
+    if error happened in this class,function will return 1
+    
+    """
     def __init__(self,host,user,password,db,charset='utf8'):
         self.conn=pymysql.connect(host=host,user=user,passwd=password,db=db,charset=charset, cursorclass=pymysql.cursors.DictCursor)
         self.cur=self.conn.cursor()
@@ -57,8 +61,13 @@ class DB(object):
             print("error,happened when del_one")
             return 1
       
+        
+
     
     def update(self,table,value,condition):
+        """
+        value and condition are dictionary
+        """
         condition=DB.deal_condition(condition)
         value=DB.deal_condition(value)
         value=value.replace('and',',')
@@ -69,6 +78,7 @@ class DB(object):
         if stats==0:
             print("error,happened when update")
             return 1
+
 
     def select(self,table,condition,need='all'):
         """
