@@ -13,6 +13,12 @@ class UserHandler(BaseHandler):
         else:
             return None
 
+    def confirm_password(self,uid,password):
+        password=Safe.md5(password)
+        if self.db.select('user',{'uid':uid,'password':password})!=1:
+            return 'success'
+        else:
+            return None
    
     def add_session(self,uid,session,deadline):
         if self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})!=1:
@@ -101,8 +107,15 @@ class LoginHandler(UserHandler):
         mail=self.get_argument('mail')
         password=self.get_argument('password')
         self.login(mail,password)
-
-        
+class ConfirmPasswordHandler(UserHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        password=self.get_argument('password')
+        if self.confirm_password(uid,password)!=None:
+            self.return_json({'result':200})
+        else:
+            self.return_json({'result':100020,'explain':'password error'})
 
 class LogoutHandler(UserHandler):
     @tornado.web.authenticated

@@ -44,6 +44,7 @@ print(a.select('user',{'id':5}))
 application = tornado.web.Application([
         (r"/test",TestHandler),
         (r"/user/reg", RegHandler),
+        (r"/user/confirmpwd",ConfirmPasswordHandler),
         (r"/user/login",LoginHandler),
         (r"/user/get",GetUserInfo),
         (r"/user/logout",LogoutHandler),
