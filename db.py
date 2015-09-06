@@ -13,6 +13,7 @@ class DB(object):
     def __init__(self,host,user,password,db,charset='utf8'):
         self.conn=pymysql.connect(host=host,user=user,passwd=password,db=db,charset=charset, cursorclass=pymysql.cursors.DictCursor)
         self.cur=self.conn.cursor()
+        self.cur.execute("set names utf8;")
 
     def insert(self,table,dic):
         """
@@ -72,12 +73,13 @@ class DB(object):
         value=DB.deal_condition(value)
         value=value.replace('and',',')
         sql='update %s set %s where %s;' % (table,value,condition)
-        print(sql)
         stats=self.cur.execute(sql)
         self.conn.commit()
         if stats==0:
             print("error,happened when update")
             return 1
+        else:
+            return 0
 
 
     def select(self,table,condition,need='all'):

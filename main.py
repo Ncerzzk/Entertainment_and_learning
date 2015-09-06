@@ -19,7 +19,8 @@ from project import *
             
 class TestHandler(BaseHandler):
     def post(self):
-        self.db.del_one('task',{'uid':1})
+        a=self.get_argument('a') or 'hello'
+        print(a)
                 
         
 class GetHTMLHandler(BaseHandler):
@@ -46,6 +47,7 @@ application = tornado.web.Application([
         (r"/user/login",LoginHandler),
         (r"/user/get",GetUserInfo),
         (r"/user/logout",LogoutHandler),
+        (r"/user/update",UpdateUserHandler),
         (r"/task/add",AddTaskHandler),
         (r"/task/update",UpdateTaskHandler),
         (r"/task/del",DelTaskHandler),
@@ -61,6 +63,7 @@ application = tornado.web.Application([
         (r"/project/unshare",UnShareProjectHandler),
         (r"/project/change",ChangeProjectShareStats),
         (r"/project/get",GetProjectInfo),
+        (r"/project/getall",GetAllProjectHandler),
         (r"/reg.html",GetHTMLHandler)
 
 ])

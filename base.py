@@ -46,15 +46,10 @@ class BaseHandler(tornado.web.RequestHandler):
                 return uid
         else:
             return None
-
-    def add_one(self,table,**kwargs):
-        return  self.db.insert(table,kwargs)
-
     def update_one(self,table,condition,**kwargs):
         return self.db.update(table,kwargs,condition)
 
 
-   
     def del_something(self,table,id,uid=None):
         idname=table[:1:]+'id'
         if uid is None:

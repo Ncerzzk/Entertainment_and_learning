@@ -4,6 +4,24 @@ from base import *
 from safe import *
 
 class UserHandler(BaseHandler):
+    def add_user(self,mail,password): 
+        password=Safe.md5(password)
+        if self.db.insert('user',{'mail':mail,'password':password})!=1:
+            uid=self.db.get_id()
+            self.db.insert('userinfo',{'uid':uid})
+            return uid
+        else:
+            return None
+
+   
+    def add_session(self,uid,session,deadline):
+        if self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})!=1:
+            sid=self.db.get_id()
+            return sid
+        else:
+            return None
+
+    
     def login(self,mail,password):
         password=Safe.md5(password)
         result = self.db.select('user',{'mail':mail,'password':password},'name,uid')[0]
@@ -19,7 +37,7 @@ class UserHandler(BaseHandler):
                 "never logined before"
                 deadline=Safe.get_deadline()
                 session=Safe.get_session(mail)
-                self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
+                self.add_session(uid,session,deadline)
             else:    
                 deadline=sessionresult[0]['deadline']
                 session=sessionresult[0]['session']
@@ -29,7 +47,7 @@ class UserHandler(BaseHandler):
                     """
                     update the session
                     """
-                    self.db.update('session',{'session':session,'uid':uid,'deadline':new_deadline},{'uid'})
+                    self.update_one('session',{'uid':uid},session=session,deadline=new_deadline)
 
             self.set_cookie('uid',str(uid))
             username=username or 'null'
@@ -48,7 +66,6 @@ class UserHandler(BaseHandler):
         self.clear_all_cookies()
 
     def reg(self,mail,password):
-        password=Safe.md5(password)
         try:
             username=self.get_argument('username')
         except:
@@ -61,12 +78,11 @@ class UserHandler(BaseHandler):
             self.return_json({'result':100001,'explain':'the user has signed.'})
             print('user has signed.')
             return None
-        if self.db.insert('user',{'mail':mail,'password':password})!=1:
-            uid=self.db.get_id()
-            self.db.insert('userinfo',{'uid':uid})
+        uid=self.add_user(mail,password)
+        if uid !=None:
             session=Safe.get_session(mail)
             deadline=Safe.get_deadline()
-            self.db.insert('session',{'uid':uid,'session':session,'deadline':deadline})
+            self.add_session(uid,session,deadline)
             self.return_json({'result':200,'uid':uid,'session':session})
             self.set_cookie('username',username)
             self.set_cookie('uid',str(uid))
@@ -90,7 +106,7 @@ class LoginHandler(UserHandler):
 
 class LogoutHandler(UserHandler):
     @tornado.web.authenticated
-    def post(self):
+    def get(self):
         uid=self.get_cookie('uid')
         self.logout(uid)
         
@@ -104,3 +120,24 @@ class GetUserInfo(UserHandler):
     def post(self):
         uid=self.get_argument('uid')
         self.get_info('userinfo',uid)
+
+class UpdateUserHandler(UserHandler):
+    @tornado.web.authenticated
+    def post(self):
+        uid=self.get_cookie('uid')
+        username=self.get_argument('username') 
+        userinfo=self.get_argument('info')
+        clear_time=self.get_argument('clear_time')
+        now_pid=self.get_argument('nowpid')
+        try:
+            password=self.get_argument('password')
+            password=Safe.md5(password)
+            if self.update_one('user',{'uid':uid},name=username,password=password)==None:
+                self.return_json({'result':100017,'explain':'update user error'})
+                return None
+        except:
+            if self.update_one('userinfo',{'uid':uid},name=username,info=userinfo,clear_time=clear_time,nowpid=now_pid)!=None:
+                self.return_json({'result':200})
+            else:
+                self.return_json({'result':100017,'explain':'update user error'})
+                return None

@@ -9,34 +9,21 @@ class TaskHandler(BaseHandler):
         arguments:
         uid,pid,task_name,task_info,score,library,time_limit
         """
-        if self.add_one('task',
-                           uid=uid,
-                           pid=pid,
-                           task_name=task_name,
-                           task_info=task_info,
-                           score=score,
-                           library=library,
-                           time_limit=time_limit
-                          )!=1:
+        dic={
+            'uid':uid,
+            'pid':pid,
+            'task_name':task_name,
+            'task_info':task_info,
+            'score':score,
+            'library':library,
+            'time_limit':time_limit
+        }
+        if self.db.insert('task',dic)!=1:
             id=self.db.get_id()
             return id
         else:
             return None
     
-    def update_task(self,uid,pid,task_name,task_info,score,library,time_limit,conditon):
-        if self.update_one(table='task',
-                           conditon=conditon,
-                            uid=uid,
-                            pid=pid,
-                            task_name=task_name,
-                            task_info=task_info,
-                            score=score,
-                            library=library,
-                            time_limit=time_limit)==1: 
-            return None
-        else:
-            return 'success'
-           
     def compelete_task(self,uid,tid):
         result=self.db.select('task',{'tid':tid},'score,time_remain')
         if result==1:
@@ -48,10 +35,11 @@ class TaskHandler(BaseHandler):
             userinfo=self.db.select('userinfo',{'uid':uid},'today_score')
             todayscore=int(userinfo[0]['today_score'])+score
             try:
-                self.db.update('userinfo',{'today_score':todayscore},{'uid':uid}) 
-                self.db.update('task',{'time_remain':time-1},{'tid':tid})
+                self.update_one('userinfo',{'uid':uid},today_score=todayscore)
+                self.update_one('task',{'tid':tid},time_remain=time-1)
                 return 'success'
-            except:
+            except Exception as e:
+                print(e)
                 return None
         else:
             return None
@@ -66,7 +54,9 @@ class TaskHandler(BaseHandler):
 
 
     def get_library(self,uid):
-        result=self.db.select('task',{'uid':uid},'library')
+        pid=self.db.select('userinfo',{'uid':uid},'nowpid')
+        pid=pid[0]['nowpid']
+        result=self.db.select('task',{'uid':uid,'pid':pid},'library')
 
         if result!=1:
             library=[]
@@ -115,7 +105,7 @@ class UpdateTaskHandler(TaskHandler):
             time_limit=-1
         pid=self.get_argument('pid')
         condition={'tid':tid}
-        if self.update_task(uid=uid,pid=pid,library=library,task_name=task_name,task_info=task_info,score=score,time_limit=time_limit,conditon=condition)!=None:
+        if self.update_one('task',condition,uid=uid,pid=pid,library=library,task_name=task_name,task_info=task_info,score=score,time_limit=time_limit)!=None: 
             self.return_json({'result':200,'tid':tid})
         else:
             self.return_json({'result':100014,'explain':'update error'})
