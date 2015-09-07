@@ -4,11 +4,21 @@
     </head>
 
     <body>
-        <form method='POST' action='http://104.236.181.88:8888/user/reg'>
-            <input name='mail'>
-            <input name='password' type='password'>
-            <button type='submit' value="提交">
-        </form>
+        <div id='reg'>
+            <div>reg</div>
+            <form method='POST' action='/user/reg'>
+                <input name='mail'>
+                <input name='password' type='password'>
+                <button type='submit' value="提交">
+            </form>
+        </div>
+        <div id="login">
+            <div>login</div>
+            <form method='POST' action='/user/login'>
+                <input name='mail'>
+                <input name='password' type='password'>
+                <button type='submit' value="提交">
+            </form>
 
     </body>
 </html>

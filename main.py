@@ -69,5 +69,5 @@ application = tornado.web.Application([
 
 ])
 
-application.listen(8888)
+application.listen(80)
 tornado.ioloop.IOLoop.instance().start()
