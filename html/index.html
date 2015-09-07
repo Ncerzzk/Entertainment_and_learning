@@ -1,0 +1,108 @@
+<html>
+    <head>
+
+        <meta charset='utf8'>
+        <title>ToDoList</title>
+
+        <style>
+            body{
+                width:70%;
+            }
+            li,ul{
+
+                list-style-type:none;
+                                            
+            }
+            *{
+                padding:0;
+                margin:0;
+                                          
+            }
+            .header_list {
+                float:left;
+                                
+            }
+            .login, .reg ,#user_info{
+                float:right;
+                                
+            }
+            li{
+                margin-right:20px;
+                            
+            }
+            #container{
+                margin-left:30%;
+            }
+            #center{
+                clear:both;
+                margin-top:80;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id='container'>
+            <div id='header'>
+                <ul>
+                    <li class='header_list'>My ToDoList</li>
+                    <li class='header_list'>discovery</li>
+                    <li class='login'>Login</li>
+                    <li class='reg'>Regiester</li>
+                    <li id='user_info'>
+                        <img id='user_img'></img>
+                        <span id='user_name'>TestUser</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div id='center'>
+                <div class="project">
+                    <div class="project_head">
+                        <span class="project_name">TestProject</span>
+                        <span class="owner">
+                            <a href="#">TestUserName</a>
+                        </span> 
+                    </div>
+                    <div class="project_info">It is a sentence describe the project.
+                    </div>
+
+                </div> 
+                <div class="project">
+                    <div class="project_head">
+                        <span class="project_name">TestProject</span>
+                        <span class="owner">
+                            <a href="#">TestUserName</a>
+                        </span> 
+                    </div>
+                    <div class="project_info">It is a sentence describe the project.
+                    </div>
+
+                </div> 
+                <div class="project">
+                    <div class="project_head">
+                        <span class="project_name">TestProject</span>
+                        <span class="owner">
+                            <a href="#">TestUserName</a>
+                        </span> 
+                    </div>
+                    <div class="project_info">It is a sentence describe the project.
+                    </div>
+                </div> 
+
+                <div id='page'>
+                    <button>Last-Page</button>
+                    <span>1/2</span>
+                    <button>Next-Page</button>
+                
+                </div>
+            </div>
+
+            <div id='footer'>
+                <a href="#">about</a>
+                <span>version 0.1</span>
+            </div>
+        </div>
+
+
+    </body>
+</html>
