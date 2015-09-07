@@ -3,11 +3,21 @@
 idea come from http://www.zhihu.com/question/33453309#answer-19211320
 
 
-/user/reg  (mail,password)其中密码以明文发送 method=POST
-/user/login (mail,password)其中密码以明文发送 method=POST
-/user/logout method=GET 无参数
-/user/update (username,info,clear_time,nowpid,[password]) method=POST
+/user/reg  
+(mail,password)其中密码以明文发送 method=POST
+
+/user/login 
+(mail,password)其中密码以明文发送 method=POST
+
+/user/logout 
+method=GET 无参数
+
+/user/update
+(username,info,clear_time,nowpid,[password]) method=POST
 密码为可选,若不修改,请不要带上.
+
+/user/confirmpwd  method=POST
+(password)
 
 /task/add method=POST
 (library,taskname,taskinfo,score,[limit])
@@ -47,7 +57,7 @@ idea come from http://www.zhihu.com/question/33453309#answer-19211320
 (pid)
 注意:只能分享当前登陆账号所拥有的project,否则返回错误
 
-/project/unsharemethod=POST 
+/project/unshare method=POST 
 (pid)
 注意:只能分享当前登陆账号所拥有的project,否则返回错误
 
