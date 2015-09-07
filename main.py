@@ -24,8 +24,9 @@ class TestHandler(BaseHandler):
                 
         
 class GetHTMLHandler(BaseHandler):
-    def get(self):
-        self.return_html('reg.html')
+    def get(self,path,file):
+        fname=path+'/'+file+'.html'
+        self.return_html(fname)
  
 class UserInfoHandler(BaseHandler):
     def post(self):
@@ -65,7 +66,7 @@ application = tornado.web.Application([
         (r"/project/change",ChangeProjectShareStats),
         (r"/project/get",GetProjectInfo),
         (r"/project/getall",GetAllProjectHandler),
-        (r"/reg.html",GetHTMLHandler)
+        (r"/(.+?)/(.+?)\.html",GetHTMLHandler)
 
 ])
 

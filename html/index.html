@@ -33,11 +33,19 @@
             #container{
                 margin-left:30%;
             }
+            #header{
+                clear:both;
+            }
+
             #center{
                 clear:both;
-                margin-top:80;
+                margin-top:40px;
+            }
+            #footer{
+                clear:both;
             }
         </style>
+        <script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script> 
     </head>
 
     <body>
@@ -47,7 +55,7 @@
                     <li class='header_list'>My ToDoList</li>
                     <li class='header_list'>discovery</li>
                     <li class='login'>Login</li>
-                    <li class='reg'>Regiester</li>
+                    <li class='reg' id="reg">Regiester</li>
                     <li id='user_info'>
                         <img id='user_img'></img>
                         <span id='user_name'>TestUser</span>
@@ -106,3 +114,12 @@
 
     </body>
 </html>
+
+<script type='text/javascript'>        
+$("#reg").click(function(){
+$.get("/html/reg.html", function(result){
+            $("#center").html(result);
+              
+        });
+});
+</script>
