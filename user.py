@@ -4,11 +4,11 @@ from base import *
 from safe import *
 
 class UserHandler(BaseHandler):
-    def add_user(self,mail,password): 
+    def add_user(self,mail,password,username): 
         password=Safe.md5(password)
-        if self.db.insert('user',{'mail':mail,'password':password})!=1:
+        if self.db.insert('user',{'mail':mail,'password':password,'name':username})!=1:
             uid=self.db.get_id()
-            self.db.insert('userinfo',{'uid':uid})
+            self.db.insert('userinfo',{'uid':uid,'name':username})
             return uid
         else:
             return None
@@ -71,11 +71,8 @@ class UserHandler(BaseHandler):
 
         self.clear_all_cookies()
 
-    def reg(self,mail,password):
-        try:
-            username=self.get_argument('username')
-        except:
-            username='null'
+    def reg(self,mail,password,username=None):
+        username=username or 'null'
         """
         rember to clear evil code in mail and password.
         """
@@ -84,7 +81,7 @@ class UserHandler(BaseHandler):
             self.return_json({'result':100001,'explain':'the user has signed.'})
             print('user has signed.')
             return None
-        uid=self.add_user(mail,password)
+        uid=self.add_user(mail,password,username)
         if uid !=None:
             session=Safe.get_session(mail)
             deadline=Safe.get_deadline()
@@ -127,7 +124,8 @@ class RegHandler(UserHandler):
     def post(self):
         mail=self.get_argument('mail')
         password=self.get_argument('password')
-        self.reg(mail,password)
+        username=self.get_argument('username')
+        self.reg(mail,password,username)
 
 class GetUserInfo(UserHandler):
     def post(self):

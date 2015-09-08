@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <html>
     <head>
 
@@ -45,7 +44,12 @@
             #footer{
                 clear:both;
             }
+
+            input,TEXTAREA{
+                display:block;
+            }
         </style>
+        <script src="http://apps.bdimg.com/libs/Cookies.js/0.4.0/cookies.js"></script>
         <script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script> 
     </head>
 
@@ -55,7 +59,7 @@
                 <ul>
                     <li class='header_list'>My ToDoList</li>
                     <li class='header_list'>discovery</li>
-                    <li class='login'>Login</li>
+                    <li class='login' id='login'>Login</li>
                     <li class='reg' id="reg">Regiester</li>
                     <li id='user_info'>
                         <img id='user_img'></img>
@@ -65,39 +69,8 @@
             </div>
 
             <div id='center'>
-                <div class="project">
-                    <div class="project_head">
-                        <span class="project_name">TestProject</span>
-                        <span class="owner">
-                            <a href="#">TestUserName</a>
-                        </span> 
-                    </div>
-                    <div class="project_info">It is a sentence describe the project.
-                    </div>
-
-                </div> 
-                <div class="project">
-                    <div class="project_head">
-                        <span class="project_name">TestProject</span>
-                        <span class="owner">
-                            <a href="#">TestUserName</a>
-                        </span> 
-                    </div>
-                    <div class="project_info">It is a sentence describe the project.
-                    </div>
-
-                </div> 
-                <div class="project">
-                    <div class="project_head">
-                        <span class="project_name">TestProject</span>
-                        <span class="owner">
-                            <a href="#">TestUserName</a>
-                        </span> 
-                    </div>
-                    <div class="project_info">It is a sentence describe the project.
-                    </div>
-                </div> 
-
+                <button id="add_project">AddProject
+                </button>
                 <div id='page'>
                     <button>Last-Page</button>
                     <span>1/2</span>
@@ -112,18 +85,95 @@
             </div>
         </div>
 
+        <div id='temple'>
+         </div>
+
 
     </body>
 </html>
 
-<script type='text/javascript'>        
-$("#reg").click(function(){
-$.get("/html/reg.html", function(result){
-            $("#center").html(result);
-              
+<script type='text/javascript'>
+    temple='';
+    $('#temple').hide();
+    if(check_login()!=0){
+        username=Cookies.get('username');
+        $('#reg').hide();
+        $('#login').hide();
+        $('#user_name').text(username);
+    }else{
+        $('#user_info').hide();
+    }
+get_my_project();
+$("#add_project").click(function(){
+$.get("/html/addproject.html", function(result){
+            $("#center").html(result);              
         });
 });
-</script>
-=======
+$("#reg").click(function(){
+$.get("/html/reg.html", function(result){
+            $("#center").html(result);              
+        });
+});
+function get_temple(data){
+    temple=data;
+};
+function get_my_project(){
+    $.get('project_temple.html',get_temple);
+    $.get('/project/getall',function(data){
+            for (i in data.projects){
+            var temp=temple;
+            temp=temp.replace('TestProject',data.projects[i].name);
+            temp=temp.replace('TestUserName',data.projects[i].owner_name);
+            temp=temp.replace('project_info',data.projects[i].info);
+            $('#page').before(temp);
+            }
+            });
 
->>>>>>> eb231ce309512d9ad2279cd64472de8e1612879d
+};
+function check_pw_pw2(){
+    if ($('#pw1').val()!=$('#pw2').val()){
+        alert('error,the passwords are different');
+        return 1;
+    }
+    else{
+        return 0;
+    }
+};
+function check_login(){
+    uid=Cookies.get('uid');
+    if (uid!=null){
+        return uid;
+    }else{
+        return 0;
+    }
+};
+function addproject(){
+    projectname=$('#project_name').val();
+    info=$('#project_info').val();
+    $.post('/project/add',{
+            projectname:projectname,
+            info:info
+            },
+            function(data,status){
+            alert(status);
+            });
+};
+function reg(){
+    if (check_pw_pw2()!=1){
+        mail=$('#mail').val();
+        password=$('#pw1').val();
+        username=$('#username').val();
+        $.post('/user/reg',{
+                mail:mail,
+                password:password,
+                username:username
+                },
+            function(data,status){
+            alert(status);
+            alert(data);
+            }
+        )
+    }
+};
+</script>
+
