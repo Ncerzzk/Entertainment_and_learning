@@ -76,12 +76,9 @@ class BaseHandler(tornado.web.RequestHandler):
             idname:id
         }        
         result=self.db.select(table,condition)
-        if result !=1:
-            self.return_json(result[0])
-            print('get %s info,success'%table)
+        if result !=1:    
+            return result[0]
         else:
-            print('erro,get project info')
-            self.return_json({'result':100009,'explain':'get %s info error'% table})
             return None
 
 

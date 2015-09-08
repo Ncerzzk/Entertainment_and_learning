@@ -37,6 +37,13 @@ class ProjectHandler(BaseHandler):
             return result
         else:
             return None
+
+    def get_all_shared_project(self,page=1):
+        result=self.db.select('project',{'share':1})
+        if result!=1:
+            return result
+        else:
+            return None
           
 
 
@@ -47,7 +54,8 @@ class AddProjectHandler(ProjectHandler):
         name=self.get_argument('projectname')
         info=self.get_argument('info')
         owner_id=self.get_cookie('uid')
-        owner_name=self.get_cookie('username')
+        username=self.db.select('user',{'uid':owner_id},'name')
+        owner_name=username[0]['name']
         pid=self.add_project(name,info,owner_id,owner_name)
         if pid!=None:
             self.return_json({'result':200,'pid':pid})
@@ -62,7 +70,8 @@ class UpdateProjectHandler(ProjectHandler):
         pid=self.get_argument('pid')
         name=self.get_argument('projectname')
         info=self.get_argument('info')
-        owner_name=self.get_cookie('username')
+        username=self.db.select('user',{'uid':owner_id},'name')
+        owner_name=username[0]['name'] 
         if self.update_one('project',{'pid':pid,'owner_id':uid},name=name,info=info,owner_name=owner_name)!=None:
             self.return_json({'result':200})
         else:
@@ -133,7 +142,11 @@ class ChangeProjectShareStats(ProjectHandler):
 class GetProjectInfo(ProjectHandler):
     def post(self):
         pid=self.get_argument('pid')
-        self.get_info('project',pid) 
+        result=self.get_info('project',pid)
+        if result!=None:
+            self.return_json({'result':200,'projectinfo':result})
+        else:
+            self.return_json({'result':100021,'explain':'error,GetProjectInfo'})
 
 class GetAllProjectHandler(ProjectHandler):
     @tornado.web.authenticated

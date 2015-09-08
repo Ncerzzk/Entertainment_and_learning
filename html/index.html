@@ -18,12 +18,13 @@
                 margin:0;
                                           
             }
-            .header_list {
+            #header_list {
                 float:left;
                                 
             }
-            .login, .reg ,#user_info{
+            #login, #reg ,#user_info,#logout{
                 float:right;
+                cursor:pointer;
                                 
             }
             li{
@@ -57,10 +58,11 @@
         <div id='container'>
             <div id='header'>
                 <ul>
-                    <li class='header_list'>My ToDoList</li>
-                    <li class='header_list'>discovery</li>
-                    <li class='login' id='login'>Login</li>
-                    <li class='reg' id="reg">Regiester</li>
+                    <li id='header_list'>My ToDoList</li>
+                    <li id='header_list'>Discovery</li>
+                    <li id='login'>Login</li>
+                    <li id="reg">Regiester</li>
+                    <li id='logout'><a href='/user/logout'>Logout</a></li>
                     <li id='user_info'>
                         <img id='user_img'></img>
                         <span id='user_name'>TestUser</span>
@@ -94,14 +96,17 @@
 
 <script type='text/javascript'>
     temple='';
+    username='';
+    userinfo='';
     $('#temple').hide();
     if(check_login()!=0){
-        username=Cookies.get('username');
+        get_userinfo();
         $('#reg').hide();
         $('#login').hide();
         $('#user_name').text(username);
     }else{
         $('#user_info').hide();
+        $('#logout').hide();
     }
 get_my_project();
 $("#add_project").click(function(){
@@ -114,6 +119,22 @@ $.get("/html/reg.html", function(result){
             $("#center").html(result);              
         });
 });
+$("#login").click(function(){
+$.get("/html/login.html", function(result){
+            $("#center").html(result);              
+        });
+})
+function get_userinfo(){
+    $.ajax({
+            type:'get',
+            url:'/user/get',
+            async:false,
+            success:function(data){
+            username=data.userinfo.name;
+            userinfo=data.userinfo.info; 
+            }
+            });
+};
 function get_temple(data){
     temple=data;
 };
@@ -124,7 +145,7 @@ function get_my_project(){
             var temp=temple;
             temp=temp.replace('TestProject',data.projects[i].name);
             temp=temp.replace('TestUserName',data.projects[i].owner_name);
-            temp=temp.replace('project_info',data.projects[i].info);
+            temp=temp.replace('projectinfo',data.projects[i].info);
             $('#page').before(temp);
             }
             });
@@ -170,10 +191,22 @@ function reg(){
                 },
             function(data,status){
             alert(status);
-            alert(data);
             }
-        )
+        );
     }
+};
+function login(){
+        mail=$('#mail').val();
+        password=$('#pw1').val();
+        $.post('/user/login',{
+                mail:mail,
+                password:password,
+                },
+            function(data,status){
+            alert(status);
+            }
+            
+        );
 };
 </script>
 

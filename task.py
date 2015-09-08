@@ -131,7 +131,11 @@ class CompeleteTaskHandler(TaskHandler):
 class GetTaskInfo(TaskHandler):
     def post(self):
         tid=self.get_argument('tid')
-        self.get_info('task',tid)
+        result=self.get_info('task',tid)
+        if result!=None:
+            self.return_json({'result':200,'taskinfo':result})
+        else:
+            self.return_json({'result':100021,'explain':'error,gettaskinfo'})
 
 class GetLibraryHandler(TaskHandler):
     @tornado.web.authenticated

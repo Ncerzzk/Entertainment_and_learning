@@ -57,7 +57,7 @@ class UserHandler(BaseHandler):
 
             self.set_cookie('uid',str(uid))
             username=username or 'null'
-            self.set_cookie('username',username)
+            self.set_cookie('username',username.encode())
             self.set_cookie('session',session)
             self.return_json({'result':200,'uid':uid,'session':session})
             print("login success and set cookie yet")
@@ -87,7 +87,7 @@ class UserHandler(BaseHandler):
             deadline=Safe.get_deadline()
             self.add_session(uid,session,deadline)
             self.return_json({'result':200,'uid':uid,'session':session})
-            self.set_cookie('username',username)
+            self.set_cookie('username',username.encode())
             self.set_cookie('uid',str(uid))
             self.set_cookie('session',session)
             print('reg success')
@@ -98,6 +98,12 @@ class UserHandler(BaseHandler):
         else:
             print("error,when regging")
         
+    def get_userinfo(self,uid):
+        result=self.get_info('userinfo',uid)
+        if result!=None:
+            return result
+        else:
+            return None
 
 class LoginHandler(UserHandler):
     def post(self):
@@ -130,7 +136,19 @@ class RegHandler(UserHandler):
 class GetUserInfo(UserHandler):
     def post(self):
         uid=self.get_argument('uid')
-        self.get_info('userinfo',uid)
+        result=self.get_userinfo(uid)
+        if result!=None:
+            self.return_json({'result':200,'userinfo':result})
+        else:
+            self.return_json({'result':100021,'explain':'error,getuserinfo'})
+
+    def get(self):
+        uid=self.get_cookie('uid')
+        result=self.get_userinfo(uid)
+        if result!=None:
+            self.return_json({'result':200,'userinfo':result})
+        else:
+            self.return_json({'result':100021,'explain':'error,getuserinfo'})
 
 class UpdateUserHandler(UserHandler):
     @tornado.web.authenticated
