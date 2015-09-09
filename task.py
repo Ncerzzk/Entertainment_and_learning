@@ -43,6 +43,12 @@ class TaskHandler(BaseHandler):
                 return None
         else:
             return None
+    def get_task(self,pid):
+        result=self.db.select('task',{'pid':pid})
+        if result!=1:
+            return result
+        else:
+            return None
 
     def get_nowtask(self,uid):
         nowpid=self.db.select('userinfo',{'uid':uid},'nowpid')[0]['nowpid']
@@ -152,6 +158,15 @@ class GetNowTask(TaskHandler):
     def get(self):
         uid=self.get_cookie('uid')
         result=self.get_nowtask(uid)
+        if result!=None:
+            self.return_json({'result':200,'task':result})
+        else:
+            self.return_json({'result':100012,'explain':'no this user or this project'})
+
+class GetTask(TaskHandler):
+    def post(self):
+        pid=self.get_argument('pid')
+        result=self.get_task(pid)
         if result!=None:
             self.return_json({'result':200,'task':result})
         else:

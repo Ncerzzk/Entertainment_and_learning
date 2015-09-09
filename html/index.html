@@ -3,52 +3,9 @@
 
         <meta charset='utf8'>
         <title>ToDoList</title>
-
+        <link rel='stylesheet' type="text/css" href='/css/style.css'>
         <style>
-            body{
-                width:70%;
-            }
-            li,ul{
 
-                list-style-type:none;
-                                            
-            }
-            *{
-                padding:0;
-                margin:0;
-                                          
-            }
-            #header_list {
-                float:left;
-                                
-            }
-            #login, #reg ,#user_info,#logout{
-                float:right;
-                cursor:pointer;
-                                
-            }
-            li{
-                margin-right:20px;
-                            
-            }
-            #container{
-                margin-left:30%;
-            }
-            #header{
-                clear:both;
-            }
-
-            #center{
-                clear:both;
-                margin-top:40px;
-            }
-            #footer{
-                clear:both;
-            }
-
-            input,TEXTAREA{
-                display:block;
-            }
         </style>
         <script src="http://apps.bdimg.com/libs/Cookies.js/0.4.0/cookies.js"></script>
         <script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script> 
@@ -58,8 +15,8 @@
         <div id='container'>
             <div id='header'>
                 <ul>
-                    <li id='header_list'>My ToDoList</li>
-                    <li id='header_list'>Discovery</li>
+                    <li id='header_list' class='button' onclick='get_my_project();'>My ToDoList</li>
+                    <li id='header_list' class='button' onclick='get_shared_project();'>Discovery</li>
                     <li id='login'>Login</li>
                     <li id="reg">Regiester</li>
                     <li id='logout'><a href='/user/logout'>Logout</a></li>
@@ -71,8 +28,7 @@
             </div>
 
             <div id='center'>
-                <button id="add_project">AddProject
-                </button>
+                <button id="add_button">AddProject</button>
                 <div id='page'>
                     <button>Last-Page</button>
                     <span>1/2</span>
@@ -98,8 +54,15 @@
     temple='';
     username='';
     userinfo='';
+    today_score=0;
+    score=0;
+    nowpid=0;
+    islogin=0;
+    islogin=check_login();
+    last='';
+    now_watch_pid='';
     $('#temple').hide();
-    if(check_login()!=0){
+    if(islogin!=0){
         get_userinfo();
         $('#reg').hide();
         $('#login').hide();
@@ -108,12 +71,8 @@
         $('#user_info').hide();
         $('#logout').hide();
     }
-get_my_project();
-$("#add_project").click(function(){
-$.get("/html/addproject.html", function(result){
-            $("#center").html(result);              
-        });
-});
+//get_my_project();
+get_shared_project();
 $("#reg").click(function(){
 $.get("/html/reg.html", function(result){
             $("#center").html(result);              
@@ -123,7 +82,25 @@ $("#login").click(function(){
 $.get("/html/login.html", function(result){
             $("#center").html(result);              
         });
-})
+});
+function change_add_button(fun,string){
+$.get("/html/center.html", function(result){
+            $("#center").html(result);              
+            $('#add_button').on('click',fun);
+            $('#add_button').text(string);
+        });
+};
+function button_add_project(){
+$.get("/html/addproject.html", function(result){
+            $("#center").html(result);              
+        });   
+};
+function button_add_task(){
+$.get("/html/addtask.html", function(result){
+        result=result.replace('PID',now_watch_pid);
+            $("#center").html(result);              
+        });   
+};
 function get_userinfo(){
     $.ajax({
             type:'get',
@@ -132,24 +109,87 @@ function get_userinfo(){
             success:function(data){
             username=data.userinfo.name;
             userinfo=data.userinfo.info; 
+            today_score=data.userinfo.today_score;
+            score=data.userinfo.score;
+            nowpid=data.userinfo.nowpid;
             }
+            });
+};
+function syn_get(url,fun){
+     $.ajax({
+            type:'get',
+            url:url,
+            async:false,
+            success:fun,
             });
 };
 function get_temple(data){
     temple=data;
 };
 function get_my_project(){
-    $.get('project_temple.html',get_temple);
+    last=get_my_project;
+    change_add_button(button_add_project,'AddProject');
+    syn_get('project_temple.html',get_temple);
     $.get('/project/getall',function(data){
             for (i in data.projects){
             var temp=temple;
+            var reg=new RegExp("PID","g");
+            temp=temp.replace(reg,data.projects[i].pid);
             temp=temp.replace('TestProject',data.projects[i].name);
             temp=temp.replace('TestUserName',data.projects[i].owner_name);
             temp=temp.replace('projectinfo',data.projects[i].info);
             $('#page').before(temp);
+            $('.fork').hide();
             }
             });
 
+};
+function get_task(pid){
+    now_watch_pid=pid;
+    change_add_button(button_add_task,'AddTask');
+    syn_get('task_temple.html',get_temple);
+    $.post('/task/gettask',{pid:pid},function(data){
+            for (i in data.task){
+            var reg=new RegExp("tid","g");
+            var temp=temple;
+            temp=temp.replace('TestTask',data.task[i].task_name);
+            temp=temp.replace('TestLibrary',data.task[i].library);
+            temp=temp.replace('taskinfo',data.task[i].task_info);
+            temp=temp.replace('TestScore',data.task[i].score);
+            temp=temp.replace(reg,data.task[i].tid);
+            $('#page').before(temp);
+            }
+            });
+};
+function get_shared_project(){
+    change_add_button(button_add_project,'AddProject');
+    $.get('project_temple.html',get_temple);
+    $.get('/project/getshared',function(data){
+    for (i in data.projects){
+        var temp=temple;
+        var reg=new RegExp("PID","g");
+        temp=temp.replace(reg,data.projects[i].pid);
+        temp=temp.replace('TestProject',data.projects[i].name);
+        var pid=data.projects[i].pid;
+        temp=temp.replace('TestUserName',data.projects[i].owner_name);
+        temp=temp.replace('projectinfo',data.projects[i].info);
+        $('#page').before(temp);
+        $('.share').hide();
+        $('.unshare').hide();
+        if(islogin==1){
+            if(data.projects[i].pid==nowpid){
+                $("#P"+pid+' .use').hide();
+            }
+        }
+    }
+    });  
+};
+function setnowpid(pid){
+    $.post('/project/setnowpid',{
+            pid:pid
+            },function(data,status){
+            alert(status);
+            });
 };
 function check_pw_pw2(){
     if ($('#pw1').val()!=$('#pw2').val()){
@@ -163,7 +203,7 @@ function check_pw_pw2(){
 function check_login(){
     uid=Cookies.get('uid');
     if (uid!=null){
-        return uid;
+        return 1;
     }else{
         return 0;
     }
@@ -174,6 +214,41 @@ function addproject(){
     $.post('/project/add',{
             projectname:projectname,
             info:info
+            },
+            function(data,status){
+            alert(status);
+            });
+};
+function addtask(pid){
+    var taskname=$('#task_name').val();
+    var taskinfo=$('#task_info').val();
+    var library=$('#library').val();
+    var timelimit=$('#time_limit').val();
+    timelimit=timelimit || -1;
+    var score=$('#task_score').val();
+    $.post('/task/add',{
+            library:library,
+            pid:pid,
+            taskname:taskname,
+            taskinfo:taskinfo,
+            score:score,
+            limit:timelimit
+            },function(data,status){
+            alert(status);
+            });
+    
+};
+function shareproject(pid){
+    $.post('/project/share',{
+            pid:pid
+            },
+            function(data,status){
+            alert(status);
+            });
+};
+function unshareproject(pid){
+    $.post('/project/unshare',{
+            pid:pid
             },
             function(data,status){
             alert(status);
@@ -190,6 +265,7 @@ function reg(){
                 username:username
                 },
             function(data,status){
+            islogin=1;
             alert(status);
             }
         );
@@ -204,9 +280,34 @@ function login(){
                 },
             function(data,status){
             alert(status);
+            islogin=1;
             }
             
         );
 };
+function competetask(tid){
+    $.post('/task/compelete',{
+            tid:tid
+            },function(data){
+            if(data.result==200){
+            alert('compelete success');
+            }else{
+            alert('compelete error');
+            }
+            });
+};
+
+function deltask(tid){
+    $.post('/task/del',{
+            tid:tid
+            },function(data){
+            if(data.result==200){
+            alert('del success');
+            }else{
+            alert('del error');
+            }
+            });
+};
+
 </script>
 

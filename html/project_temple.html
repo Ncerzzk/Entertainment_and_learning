@@ -1,11 +1,14 @@
-<div class="project">
+<div class="project" id="PPID" >
     <div class="project_head">
-        <span class="project_name">TestProject</span>
+        <span class="project_name button" onclick="get_task(PID)">TestProject</span>
         <span class="owner">
             <a href="#">TestUserName</a>
         </span> 
+        <a class="use button" onclick="setnowpid(PID);">Use</a>
+        <a class="share button" onclick='shareproject(PID);'>Share</a>
+        <a class="unshare button" onclick='unshareproject(PID);'>UnShare</a>
+        <a class="fork">fork</a>
     </div>
     <div class="project_info">projectinfo
     </div>
-</div>
-            
+</div>    

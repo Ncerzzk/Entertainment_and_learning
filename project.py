@@ -38,14 +38,40 @@ class ProjectHandler(BaseHandler):
         else:
             return None
 
-    def get_all_shared_project(self,page=1):
+    def get_all_shared_projects(self,page=1):
         result=self.db.select('project',{'share':1})
         if result!=1:
             return result
         else:
             return None
           
-
+    def fork_project(self,pid,uid):
+        result=self.db.select('project',{'pid':pid})
+        #now get username
+        username=self.db.select('userinfo',{'uid':uid},'name')
+        if result!=1:
+            result=result[0]
+            #add fork count
+            self.update_one('project',{'pid':pid},fork_count=int(result['fork_count'])+1)
+            result.pop('pid')
+            result['owner_id']=uid
+            result['owner_name']=username[0]['name']
+            result['share']=0
+            result['fork_count']=0
+            self.db.insert('project',result)
+            newpid=self.db.get_id()
+            #now start copy task
+            tasks=self.db.select('task',{'pid':pid})
+            if tasks !=1:
+                for i in tasks:
+                    i.pop('tid')
+                    i['pid']=newpid
+                    self.db.insert('task',i)
+                return newpid
+            else:
+                return None
+        else:
+            return None
 
 
 class AddProjectHandler(ProjectHandler):
@@ -157,3 +183,21 @@ class GetAllProjectHandler(ProjectHandler):
             self.return_json({'result':200,'projects':result})
         else:
             self.return_json({'result':100019,'explain':'no projects'})
+
+class GetAllSharedProjectHandler(ProjectHandler):
+    def get(self):
+        result=self.get_all_shared_projects()
+        if result!=None:
+            self.return_json({'result':200,'projects':result})
+        else:
+            self.return_json({'result':100022,'explain':'get shared projects error'})
+
+class ForkProjectHandler(ProjectHandler):
+    def post(self):
+        uid=self.get_cookie('uid')
+        pid=self.get_argument('pid')
+        result=self.fork_project(pid,uid)
+        if result!=None:
+            self.return_json({'result':200,'newpid':result})
+        else:
+            self.return_json({'result':100023,'explain':'error fork'})

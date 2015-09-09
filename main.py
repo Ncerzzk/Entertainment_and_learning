@@ -25,7 +25,7 @@ class TestHandler(BaseHandler):
         
 class GetHTMLHandler(BaseHandler):
     def get(self,path,file):
-        fname=path+'/'+file+'.html'
+        fname=path+'/'+file
         self.return_html(fname)
  
 class UserInfoHandler(BaseHandler):
@@ -57,6 +57,7 @@ application = tornado.web.Application([
         (r"/task/compelete",CompeleteTaskHandler),
         (r"/task/getlibrary",GetLibraryHandler),
         (r"/task/getnowtask",GetNowTask),
+        (r"/task/gettask",GetTask),
         (r"/project/add",AddProjectHandler),
         (r"/project/setnowpid",SetNowPidHandler),
         (r"/project/del",DelProjectHandler),
@@ -66,7 +67,9 @@ application = tornado.web.Application([
         (r"/project/change",ChangeProjectShareStats),
         (r"/project/get",GetProjectInfo),
         (r"/project/getall",GetAllProjectHandler),
-        (r"/(.+?)/(.+?)\.html",GetHTMLHandler)
+        (r"/project/getshared",GetAllSharedProjectHandler),
+        (r"/project/fork",ForkProjectHandler),
+        (r"/(.+?)/(.+?)",GetHTMLHandler)
 
 ])
 

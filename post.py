@@ -33,7 +33,7 @@ def login(mail,pwd):
         'mail':mail,
         'password':pwd
     }
-    print(post('http://localhost:8888/user/login',data))
+    print(post('http://localhost/user/login',data))
 
 def update(username,info,clear_time,nowpid,password=None):
     data={
@@ -52,7 +52,12 @@ def addproject(projectname,info):
     'projectname':projectname,
     'info':info
     }
-    print(post('http://localhost:8888/project/add',data))
+    print(post('http://localhost/project/add',data))
+def forkproject(pid):
+    data={
+    'pid':pid
+    }
+    print(post('http://localhost/project/fork',data))    
 def delproject(pid):
     data={
         'pid':pid
@@ -137,7 +142,8 @@ login('e.255mail@gmail.com','6789mm')
 #login('huangzzk@bupt.edu.cn4','6789mm')
 #addproject('工程测试1','这是一段测试用的信息,没多大用处.但是我想尽量多写一些东西,来测试占用.编不下去了好累.')
 #updateproject(1,'工程测试1','我把废话删除了.')
-getallproject()
+#getallproject()
+forkproject(1)
 #getproject(1)
 #changeshareproject(1)
 #unshareproject(1)
