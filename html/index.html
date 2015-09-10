@@ -219,11 +219,19 @@ function get_shared_project(){
 };
 function setnowpid(pid){
     //set the user now-useing-project
+  syn_post('/project/setnowpid',{
+            pid:pid
+            },function(data,status){
+            alert(status);
+            });
+  get_userinfo();
+/*
     $.post('/project/setnowpid',{
             pid:pid
             },function(data,status){
             alert(status);
             });
+            */
 };
 function check_pw_pw2(){
     //check if pw==pw2 ,used when reg
