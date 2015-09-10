@@ -4,6 +4,7 @@ import pymysql
 import pymysql.cursors
 import pymysql.err
 from safe import *
+from error import *
 
 class DB(object):
     """

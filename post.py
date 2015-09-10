@@ -74,12 +74,12 @@ def shareproject(pid):
     data={
         'pid':pid
         }
-    print(post('http://localhost:8888/project/share',data))
+    print(post('http://localhost/project/share',data))
 def unshareproject(pid):
     data={
         'pid':pid
         }
-    print(post('http://localhost:8888/project/unshare',data))
+    print(post('http://localhost/project/unshare',data))
 def changeshareproject(pid):
     data={
         'pid':pid
@@ -89,9 +89,14 @@ def getproject(pid):
     data={
         'pid':pid
         }
-    print(post('http://localhost:8888/project/get',data))
+    print(post('http://localhost/project/get',data))
+def getprojecttask(pid):
+    data={
+        'pid':pid
+        }
+    print(post('http://localhost/task/gettask',data))
 def getallproject():
-    print(get('http://localhost:8888/project/getall'))
+    print(get('http://localhost/project/getall'))
 def setnowpid(pid):
     data={
     'pid':pid
@@ -105,7 +110,7 @@ def addtask(taskname,taskinfo,score,library,pid):
         'library':library,
         'pid':pid
         }
-    print(post('http://localhost:8888/task/add',data))
+    print(post('http://localhost/task/add',data))
 def updatetask(tid,taskname,taskinfo,score,library,pid):
     data={
         'tid':tid,
@@ -143,13 +148,13 @@ login('e.255mail@gmail.com','6789mm')
 #addproject('工程测试1','这是一段测试用的信息,没多大用处.但是我想尽量多写一些东西,来测试占用.编不下去了好累.')
 #updateproject(1,'工程测试1','我把废话删除了.')
 #getallproject()
-forkproject(1)
-#getproject(1)
+#forkproject(1)
+#getprojecttask(19)
 #changeshareproject(1)
-#unshareproject(1)
+unshareproject(19)
 #setnowpid(1)
 #updatetask(4,'任务测试1312321321321','task1info',3,'成就库',1)
-#addtask('任务测试2','task2info',-3,'娱乐库',1)
+#addtask('任务测试2','task2info',-3,'娱乐库',12)
 #addtask('tasktest3','task3info',7,'成就库',1)
 #gettask(4)
 #deltask(6)

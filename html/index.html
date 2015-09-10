@@ -84,22 +84,32 @@ $.get("/html/login.html", function(result){
         });
 });
 function change_add_button(fun,string){
-$.get("/html/center.html", function(result){
+    //change the click funciton and text of  add_button
+    //change to add_project or add_task
+    $.get("/html/center.html", function(result){
             $("#center").html(result);              
             $('#add_button').on('click',fun);
             $('#add_button').text(string);
-        });
+    });
 };
 function button_add_project(){
-$.get("/html/addproject.html", function(result){
+    if islogin!=1{
+        alert('You need login');
+        return null;
+    }
+    $.get("/html/addproject.html", function(result){
             $("#center").html(result);              
-        });   
+    });   
 };
 function button_add_task(){
-$.get("/html/addtask.html", function(result){
+    if islogin!=1{
+        alert("You nedd login");
+        return null;
+    }
+    $.get("/html/addtask.html", function(result){
         result=result.replace('PID',now_watch_pid);
             $("#center").html(result);              
-        });   
+    });   
 };
 function get_userinfo(){
     $.ajax({
@@ -149,42 +159,43 @@ function get_task(pid){
     change_add_button(button_add_task,'AddTask');
     syn_get('task_temple.html',get_temple);
     $.post('/task/gettask',{pid:pid},function(data){
-            for (i in data.task){
-            var reg=new RegExp("tid","g");
-            var temp=temple;
-            temp=temp.replace('TestTask',data.task[i].task_name);
-            temp=temp.replace('TestLibrary',data.task[i].library);
-            temp=temp.replace('taskinfo',data.task[i].task_info);
-            temp=temp.replace('TestScore',data.task[i].score);
-            temp=temp.replace(reg,data.task[i].tid);
-            $('#page').before(temp);
-            }
-            });
+        for (i in data.task){
+        var reg=new RegExp("tid","g");
+        var temp=temple;
+        temp=temp.replace('TestTask',data.task[i].task_name);
+        temp=temp.replace('TestLibrary',data.task[i].library);
+        temp=temp.replace('taskinfo',data.task[i].task_info);
+        temp=temp.replace('TestScore',data.task[i].score);
+        temp=temp.replace(reg,data.task[i].tid);
+        $('#page').before(temp);
+        }
+    });
 };
 function get_shared_project(){
     change_add_button(button_add_project,'AddProject');
     $.get('project_temple.html',get_temple);
     $.get('/project/getshared',function(data){
-    for (i in data.projects){
-        var temp=temple;
-        var reg=new RegExp("PID","g");
-        temp=temp.replace(reg,data.projects[i].pid);
-        temp=temp.replace('TestProject',data.projects[i].name);
-        var pid=data.projects[i].pid;
-        temp=temp.replace('TestUserName',data.projects[i].owner_name);
-        temp=temp.replace('projectinfo',data.projects[i].info);
-        $('#page').before(temp);
-        $('.share').hide();
-        $('.unshare').hide();
-        if(islogin==1){
-            if(data.projects[i].pid==nowpid){
-                $("#P"+pid+' .use').hide();
+        for (i in data.projects){
+            var temp=temple;
+            var reg=new RegExp("PID","g");
+            temp=temp.replace(reg,data.projects[i].pid);
+            temp=temp.replace('TestProject',data.projects[i].name);
+            var pid=data.projects[i].pid;
+            temp=temp.replace('TestUserName',data.projects[i].owner_name);
+            temp=temp.replace('projectinfo',data.projects[i].info);
+            $('#page').before(temp);
+            $('.share').hide();
+            $('.unshare').hide();
+            if(islogin==1){
+                if(data.projects[i].pid==nowpid){
+                    $("#P"+pid+' .use').hide();
+                }
             }
         }
-    }
     });  
 };
 function setnowpid(pid){
+    //set the user now-useing-project
     $.post('/project/setnowpid',{
             pid:pid
             },function(data,status){
@@ -192,6 +203,7 @@ function setnowpid(pid){
             });
 };
 function check_pw_pw2(){
+    //check if pw==pw2 ,used when reg
     if ($('#pw1').val()!=$('#pw2').val()){
         alert('error,the passwords are different');
         return 1;
@@ -201,6 +213,7 @@ function check_pw_pw2(){
     }
 };
 function check_login(){
+    //check if the user has logined
     uid=Cookies.get('uid');
     if (uid!=null){
         return 1;
@@ -238,21 +251,28 @@ function addtask(pid){
             });
     
 };
+function check_result(data,oktext="success",failtext="error"){
+    if (data.result==200){
+        alert(oktext);
+    }else{
+        alert(failtext);
+    }
+};
 function shareproject(pid){
     $.post('/project/share',{
-            pid:pid
-            },
-            function(data,status){
-            alert(status);
-            });
+        pid:pid
+        },
+        function(data,status){
+            check_result(data,'share success','fail to share the project');
+        });
 };
 function unshareproject(pid){
     $.post('/project/unshare',{
-            pid:pid
+        pid:pid
             },
-            function(data,status){
-            alert(status);
-            });
+        function(data,status){
+            check_result(data,'unshare success','fail to unshare the project');
+        });
 };
 function reg(){
     if (check_pw_pw2()!=1){
@@ -269,6 +289,8 @@ function reg(){
             alert(status);
             }
         );
+    }else{
+        alert('the passwords are different.');
     }
 };
 function login(){
@@ -279,8 +301,12 @@ function login(){
                 password:password,
                 },
             function(data,status){
-            alert(status);
-            islogin=1;
+            if (data.result==200){
+                alert('login success'); 
+                islogin=1;
+            }else{
+                alert('fail,please make sure your email and password are correct.');
+                }
             }
             
         );
@@ -304,7 +330,7 @@ function deltask(tid){
             if(data.result==200){
             alert('del success');
             }else{
-            alert('del error');
+            alert('del error,you may not the owner of this task');
             }
             });
 };

@@ -4,7 +4,7 @@ from db import *
 import tornado.web
 import json
 from setting import *
-
+from error import *
 
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self):
@@ -63,12 +63,9 @@ class BaseHandler(tornado.web.RequestHandler):
             }
         result=self.db.del_one(table,condition)
         if result==1:
-            self.return_json({'result':100003,'explain':' not found'})
-            print("error,del")
-            return None
+            raise NoFoundError(table)
         else:
-            print("del success")
-            self.return_json({'result':200})
+            return 'success'
 
     def get_info(self,table,id):
         idname=table[:1:]+'id'
@@ -79,6 +76,6 @@ class BaseHandler(tornado.web.RequestHandler):
         if result !=1:    
             return result[0]
         else:
-            return None
+            raise NoFoundError(table+' info')
 
 
