@@ -23,6 +23,7 @@
                     <li id='user_info'>
                         <img id='user_img'></img>
                         <span id='user_name'>TestUser</span>
+                        <span id="today_score">TodayScore:TestScore</span>
                     </li>
                 </ul>
             </div>
@@ -30,15 +31,15 @@
             <div id='center'>
                 <button id="add_button">AddProject</button>
                 <div id='page'>
-                    <button>Last-Page</button>
-                    <span>1/2</span>
+                    <button >Last-Page</button>
+                    <span>1/1</span>
                     <button>Next-Page</button>
                 
                 </div>
             </div>
 
             <div id='footer'>
-                <a href="#">about</a>
+                <a href="#" >about</a>
                 <span>version 0.1</span>
             </div>
         </div>
@@ -50,27 +51,20 @@
     </body>
 </html>
 
-<script type='text/javascript'>
+<script>
     temple='';
     username='';
     userinfo='';
+    last='';
+    now='';
     today_score=0;
     score=0;
     nowpid=0;
     islogin=0;
-    islogin=check_login();
-    last='';
+    check_login();
     now_watch_pid='';
     $('#temple').hide();
-    if(islogin!=0){
-        get_userinfo();
-        $('#reg').hide();
-        $('#login').hide();
-        $('#user_name').text(username);
-    }else{
-        $('#user_info').hide();
-        $('#logout').hide();
-    }
+    
 //get_my_project();
 get_shared_project();
 $("#reg").click(function(){
@@ -93,7 +87,7 @@ function change_add_button(fun,string){
     });
 };
 function button_add_project(){
-    if islogin!=1{
+    if (islogin!=1){
         alert('You need login');
         return null;
     }
@@ -102,14 +96,14 @@ function button_add_project(){
     });   
 };
 function button_add_task(){
-    if islogin!=1{
+    if (islogin!=1){
         alert("You nedd login");
         return null;
     }
     $.get("/html/addtask.html", function(result){
         result=result.replace('PID',now_watch_pid);
             $("#center").html(result);              
-    });   
+    });  
 };
 function get_userinfo(){
     $.ajax({
@@ -124,7 +118,10 @@ function get_userinfo(){
             nowpid=data.userinfo.nowpid;
             }
             });
+    $('#today_score').text("TodayScore:"+today_score);
+    $('#user_name').text(username);
 };
+
 function syn_get(url,fun){
      $.ajax({
             type:'get',
@@ -133,11 +130,19 @@ function syn_get(url,fun){
             success:fun,
             });
 };
+function syn_post(url,data,fun){
+    $.ajax({
+            type:'post',
+            data:data,
+            url:url,
+            async:false,
+            success:fun
+            });
+}
 function get_temple(data){
     temple=data;
 };
 function get_my_project(){
-    last=get_my_project;
     change_add_button(button_add_project,'AddProject');
     syn_get('project_temple.html',get_temple);
     $.get('/project/getall',function(data){
@@ -158,6 +163,23 @@ function get_task(pid){
     now_watch_pid=pid;
     change_add_button(button_add_task,'AddTask');
     syn_get('task_temple.html',get_temple);
+    syn_post('/task/gettask',{pid:pid},function(data){
+        for (i in data.task){
+        var reg=new RegExp("tid","g");
+        var temp=temple;
+        temp=temp.replace('TestTask',data.task[i].task_name);
+        temp=temp.replace('TestLibrary',data.task[i].library);
+        temp=temp.replace('taskinfo',data.task[i].task_info);
+        temp=temp.replace('TestScore',data.task[i].score);
+        temp=temp.replace(reg,data.task[i].tid);
+        $('#page').before(temp);
+        }           
+            });
+    if(now_watch_pid!=nowpid){
+        $('.compete').hide();
+        $('.deltask').hide();
+    }
+    /*
     $.post('/task/gettask',{pid:pid},function(data){
         for (i in data.task){
         var reg=new RegExp("tid","g");
@@ -170,6 +192,7 @@ function get_task(pid){
         $('#page').before(temp);
         }
     });
+    */
 };
 function get_shared_project(){
     change_add_button(button_add_project,'AddProject');
@@ -213,12 +236,26 @@ function check_pw_pw2(){
     }
 };
 function check_login(){
+    
     //check if the user has logined
     uid=Cookies.get('uid');
     if (uid!=null){
-        return 1;
+        islogin=1;
     }else{
-        return 0;
+        islogin=0;
+    }
+    if(islogin!=0){
+        get_userinfo();
+        $('#user_info').show();
+        $('#logout').show();
+        $('#reg').hide();
+        $('#login').hide();
+        $('#user_name').text(username);
+    }else{
+        $('#user_info').hide();
+        $('#logout').hide();
+        $('#reg').show();
+        $('#login').show();
     }
 };
 function addproject(){
@@ -229,7 +266,12 @@ function addproject(){
             info:info
             },
             function(data,status){
-            alert(status);
+            if(data.result!=200){
+            alert(data.explain);
+            }else{
+            alert('add success');
+            get_my_project();
+            } 
             });
 };
 function addtask(pid){
@@ -247,23 +289,26 @@ function addtask(pid){
             score:score,
             limit:timelimit
             },function(data,status){
-            alert(status);
+            if(data.result!=200){
+            alert(data.explain);
+            }else{
+            alert('add success');
+            get_task(now_watch_pid);//refresh the page
+            }
             });
     
-};
-function check_result(data,oktext="success",failtext="error"){
-    if (data.result==200){
-        alert(oktext);
-    }else{
-        alert(failtext);
-    }
 };
 function shareproject(pid){
     $.post('/project/share',{
         pid:pid
         },
         function(data,status){
-            check_result(data,'share success','fail to share the project');
+        if (data.result!=200){
+            alert(data.explain);
+            }else{
+            get_my_project();
+            alert("Okay!");
+            }
         });
 };
 function unshareproject(pid){
@@ -271,7 +316,12 @@ function unshareproject(pid){
         pid:pid
             },
         function(data,status){
-            check_result(data,'unshare success','fail to unshare the project');
+        if(data.result!=200){
+        alert(data.explain);
+        }else{
+        get_my_project();
+        alert('Okay!');
+        }
         });
 };
 function reg(){
@@ -285,8 +335,13 @@ function reg(){
                 username:username
                 },
             function(data,status){
-            islogin=1;
-            alert(status);
+            if (data.result==200){
+                alert('login success'); 
+                check_login();
+                get_shared_project();
+            }else{
+                alert('fail,please make sure your email and password are correct.');
+                }  
             }
         );
     }else{
@@ -303,7 +358,8 @@ function login(){
             function(data,status){
             if (data.result==200){
                 alert('login success'); 
-                islogin=1;
+                check_login();
+                get_shared_project();
             }else{
                 alert('fail,please make sure your email and password are correct.');
                 }
@@ -315,10 +371,11 @@ function competetask(tid){
     $.post('/task/compelete',{
             tid:tid
             },function(data){
-            if(data.result==200){
-            alert('compelete success');
+            if(data.result!=200){
+            alert(data.explain);
             }else{
-            alert('compelete error');
+            alert('Okay');
+            get_userinfo();
             }
             });
 };
@@ -327,10 +384,11 @@ function deltask(tid){
     $.post('/task/del',{
             tid:tid
             },function(data){
-            if(data.result==200){
-            alert('del success');
+            if(data.result!=200){
+            alert(data.explain);
             }else{
-            alert('del error,you may not the owner of this task');
+            alert('add success');
+            get_task(now_watch_pid);//refresh the page 
             }
             });
 };

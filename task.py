@@ -25,27 +25,29 @@ class TaskHandler(BaseHandler):
         e12 no found project
         e13 add error
         """
+        uid=int(uid)
         #check the user is the project owner
         owner=self.db.select('project',{'pid':pid},'owner_id')
         if owner!=1:
             if owner[0]['owner_id']!=uid:
                 raise UserUnfitError
+            else:
+                dic={
+                    'uid':uid,
+                    'pid':pid,
+                    'task_name':task_name,
+                    'task_info':task_info,
+                    'score':score,
+                    'library':library,
+                    'time_limit':time_limit
+                }
+                if self.db.insert('task',dic)!=1:
+                    id=self.db.get_id()
+                    return id
+                else:
+                    raise AddError
         else:
             raise NoFoundError('Task')
-        dic={
-            'uid':uid,
-            'pid':pid,
-            'task_name':task_name,
-            'task_info':task_info,
-            'score':score,
-            'library':library,
-            'time_limit':time_limit
-        }
-        if self.db.insert('task',dic)!=1:
-            id=self.db.get_id()
-            return id
-        else:
-            raise AddError
     
     def compelete_task(self,uid,tid):
         result=self.db.select('task',{'tid':tid},'score,time_remain')
@@ -94,10 +96,11 @@ class TaskHandler(BaseHandler):
 
     def del_task(self,tid,uid):
         #check if the user is the task owner
+        uid=int(uid)
         owner=self.db.select('task',{'tid':tid},'uid') 
         if owner==1:
             raise NoFoundError('Task')
-        if owner[0].uid!=uid:
+        if owner[0]['uid']!=uid:
             raise UserUnfitError
         self.del_something('task',tid,uid)
 

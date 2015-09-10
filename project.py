@@ -29,6 +29,7 @@ class ProjectHandler(BaseHandler):
    
     def set_share_stat(self,pid,uid,stat):
         #check owner
+        uid=int(uid)
         owner=self.db.select('project',{'pid':pid},'owner_id')
         if owner==1:
             raise NoFoundError('project')
