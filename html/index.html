@@ -80,7 +80,7 @@ $.get("/html/login.html", function(result){
 function change_add_button(fun,string){
     //change the click funciton and text of  add_button
     //change to add_project or add_task
-    $.get("/html/center.html", function(result){
+    syn_get("/html/center.html", function(result){
             $("#center").html(result);              
             $('#add_button').on('click',fun);
             $('#add_button').text(string);
