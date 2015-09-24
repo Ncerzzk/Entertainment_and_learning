@@ -13,4 +13,4 @@ class AddError(Error):
     def __init__(self,what):
         self.what=what
     def __str__(self):
-        return "fail to add %s" %self.wha
+        return "fail to add %s" %self.what

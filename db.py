@@ -62,9 +62,6 @@ class DB(object):
         if stats==0:
             print("error,happened when del_one")
             return 1
-      
-        
-
     
     def update(self,table,value,condition):
         """

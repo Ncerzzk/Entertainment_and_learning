@@ -30,37 +30,13 @@ class UserHandler(BaseHandler):
     
     def login(self,mail,password):
         password=Safe.md5(password)
-        result = self.db.select('user',{'mail':mail,'password':password},'name,uid')[0]
-        username=result['name']
+        result = self.db.select('user',{'mail':mail,'password':password},'uid')
+        if result==1:
+            return None
+        result=result[0]
         uid=result['uid']
-        if result!=1:
-            """
-            login success,check session;
-            """
-            sessionresult=self.db.select('session',{'uid':uid},'session,deadline')
-            now_time=Safe.get_time()
-            if sessionresult==1:
-                "never logined before"
-                deadline=Safe.get_deadline()
-                session=Safe.get_session(mail)
-                self.add_session(uid,session,deadline)
-            else:    
-                deadline=sessionresult[0]['deadline']
-                session=sessionresult[0]['session']
-                if int(now_time)>int(deadline):
-                    session=Safe.get_session(mail)
-                    new_deadline=Safe.get_deadline()
-                    """
-                    update the session
-                    """
-                    self.update_one('session',{'uid':uid},session=session,deadline=new_deadline)
-
-            self.set_cookie('uid',str(uid))
-            username=username or 'null'
-            self.set_cookie('username',username.encode())
-            self.set_cookie('session',session)
-            self.return_json({'result':200,'uid':uid,'session':session})
-            print("login success and set cookie yet")
+        self.set_secrue_cookie('uid',str(uid))
+        return uid
 
     def logout(self,uid):
         if self.db.del_one('session',{'uid':uid})!=1:
@@ -83,20 +59,9 @@ class UserHandler(BaseHandler):
             return None
         uid=self.add_user(mail,password,username)
         if uid !=None:
-            session=Safe.get_session(mail)
-            deadline=Safe.get_deadline()
-            self.add_session(uid,session,deadline)
             self.return_json({'result':200,'uid':uid,'session':session})
-            self.set_cookie('username',username.encode())
-            self.set_cookie('uid',str(uid))
-            self.set_cookie('session',session)
-            print('reg success')
-            """
-            reg success,return session.
-            return json.
-            """
-        else:
-            print("error,when regging")
+            self.set_secrue_cookie('uid',str(uid))
+
         
     def get_userinfo(self,uid):
         result=self.get_info('userinfo',uid)
@@ -109,7 +74,16 @@ class LoginHandler(UserHandler):
     def post(self):
         mail=self.get_argument('mail')
         password=self.get_argument('password')
-        self.login(mail,password)
+        result=self.login(mail,password)
+        if result!=None:
+            self.return_json({'uid':result})
+        else:
+            self.return_json({'result':'100000'})
+
+    def get(self):
+        pass
+
+
 class ConfirmPasswordHandler(UserHandler):
     @tornado.web.authenticated
     def post(self):

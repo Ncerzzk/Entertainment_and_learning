@@ -35,12 +35,6 @@ class UserInfoHandler(BaseHandler):
 class UpdateUserInfoHandler(BaseHandler):
     def post(self):
         pass 
-"""
-a=DB('localhost','root','6789mm','learning')
-# a.insert('user',{'name':'hello','password':'1234' })
-a.del_one('user',{'name':'hello'})
-print(a.select('user',{'id':5}))
-"""
 
 application = tornado.web.Application([
         (r"/test",TestHandler),
@@ -71,7 +65,7 @@ application = tornado.web.Application([
         (r"/project/fork",ForkProjectHandler),
         (r"/(.+?)/(.+?)",GetHTMLHandler)
 
-])
+],cookie_secret=SECRET)
 
 application.listen(80)
 tornado.ioloop.IOLoop.instance().start()

@@ -9,3 +9,5 @@ DBPWD='6789mm'
 DBNAME='learning'
 
 TIMEADD=0
+
+SECRET="hellowoxianghezhegeshijietantan"
